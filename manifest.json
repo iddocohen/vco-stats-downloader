@@ -1,0 +1,37 @@
+{
+  "manifest_version": 2,
+
+  "name": "VCO Statistics Downloader",
+  "description": "Download statistics from VMware SD-WAN Orchestrator as CSV",
+  "version": "0.1",
+
+  "icons": { 
+        "16": "icon/icon16-white.png",
+        "48": "icon/icon48-white.png",
+        "128": "icon/icon128-white.png" 
+  },
+  "browser_action": {
+    "default_icon": "icon/icon16-white.png",
+    "default_popup": "popup.html"
+  },
+  
+  "permissions": [
+    "activeTab",
+    "storage",
+    "unlimitedStorage",
+    "tabs",
+    "downloads",
+    "*://*.velocloud.net/*"
+  ],
+  "background": {
+        "scripts": ["js/background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.velocloud.net/*"],
+      "run_at": "document_start",
+      "js": ["js/contentscript.js", "js/injected.js","js/jquery.min.js"]
+    }
+  ],
+  "web_accessible_resources": ["js/injected.js"]
+}
