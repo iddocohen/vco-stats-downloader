@@ -8,6 +8,10 @@ It gives the user the ability to download the statistics as CSV after a given we
 
 Enjoy!
 
+## Demo
+
+![Demo](https://github.com/iddocohen/vco-stats-downloader/blob/main/demo.gif?raw=true)
+
 ## Tested
 
 System tested on:
