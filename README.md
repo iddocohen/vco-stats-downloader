@@ -8,9 +8,17 @@ It gives the user the ability to download the statistics as CSV after a given we
 
 Enjoy!
 
+## Warning
+
+This extension injects javascript code into the existing VCO website. 
+
+As such, please before filling any bugs around UI to support, remove the extension first and try again.
+
+Depending on the demand, I might program a switch for enable/disable the plugin. 
+
 ## Demo
 
-![Demo](https://github.com/iddocohen/vco-stats-downloader/blob/main/demo.gif?raw=true)
+![VCO Statistics Downloader Demo](https://github.com/iddocohen/vco-stats-downloader/blob/main/demo.gif?raw=true)
 
 ## Tested
 
