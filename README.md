@@ -1,6 +1,6 @@
 VCO Statistics Downloader - Chrome Extension
 =====================================
-The VMware SD-WAN Orchestrator presents a lot of statistical graphs; however, these data sets for the graphs are not downloadable when the graphs are called. 
+The VMware SD-WAN Orchestrator (VCO) presents a lot of statistical graphs; however, these data sets for the graphs are not downloadable when the graphs are called. 
 
 This extension, tries to solve that problem. 
 
@@ -12,7 +12,10 @@ Enjoy!
 
 System tested on:
 
-* Google Chrome: Version 89.0.4389.90 (Official Build) (x86_64)
+* Google Chrome version: 89.0.4389.90 (Official Build) (x86_64)
+* VCO version: 4.2.0 
+
+Different VCO versions could work as well but not tested.
 
 ## Install
 
