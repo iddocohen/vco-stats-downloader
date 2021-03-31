@@ -16,6 +16,15 @@ As such, please before filling any bugs around UI to support, remove the extensi
 
 Depending on the demand, I might program a switch for enable/disable the plugin. 
 
+
+## Versions
+
+* 0.2:
+    * Supporting now QoE Statistics.
+
+* 0.1:
+    * First release.
+
 ## Demo
 
 ![VCO Statistics Downloader Demo](https://github.com/iddocohen/vco-stats-downloader/blob/main/demo.gif?raw=true)
@@ -38,7 +47,8 @@ To load the extension, you need to:
 * Make sure you are in development mode
 * Click on "Load unpacked extension" and navigate to your extension folder.
 
-Depending on demand, I may put it under the marketplace of Google. 
+The extension is configured to only allow .velocloud.net based addresses.
+This can be changed by altering the manifest.json and change it to your URL.
 
 ## Storage
 
