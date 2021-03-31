@@ -68,7 +68,8 @@
                             if (req.method == 'metrics/getEdgeLinkSeries'  ||
                                 req.method == 'metrics/getEdgeAppSeries'   ||
                                 req.method == 'metrics/getEdgeDeviceSeries'||
-                                req.method == 'metrics/getEdgeDestSeries'
+                                req.method == 'metrics/getEdgeDestSeries'  ||
+                                req.method == 'linkQualityEvent/getLinkQualityEvents'
                             ){
                                 var items = [];
                                 var name = "";
@@ -92,48 +93,80 @@
                                           items.push(["Timestamp", "Destination", "Metric", "Data"]); 
                                           name = "Destinations";
                                           break;
+                                    case "linkQualityEvent/getLinkQualityEvents":
+                                          items.push(["Timestamp", "Interface", "Jitter Tx (ms)", "Jitter Rx (ms)", "Latency Tx (ms)", "Latency Rx (ms)", "Packet loss (%) Tx", "Packet loss(%) Rx", "Voice QoE", "Video QoE", "Transactional QoE"]);
+                                          name = "QoE";
+                                          break;
          
                                 }
                                 // going through Object (from JSON) to get relevant pieces
-                                for (const [_, type] of Object.entries(resp.result)) {
-                                    for (const [_, dir] of Object.entries(type.series)) {
-                                        var typeval = "";
-                                        var timestamp = 0;
-                                        switch(req.method){
-                                                case "metrics/getEdgeLinkSeries":
-                                                    timestamp = dir.startTime;
-                                                    typeval = type.link.interface;
-                                                    break;
-                                                case "metrics/getEdgeAppSeries" :
-                                                    timestamp = new Date(dir.startTime).getTime();
-                                                    // using UI info to get the real name of application. Other option do an API call, but saving that.
-                                                    typeval = document.querySelectorAll("[data-id='"+type.name+"']")[0].innerText;
-                                                    break;
-                                                case "metrics/getEdgeDestSeries":
-                                                case "metrics/getEdgeDeviceSeries":
-                                                    timestamp = new Date(dir.startTime).getTime();
-                                                    typeval = type.name;
-                                                    break;
+                                for (const [key, type] of Object.entries(resp.result)) {
+                                    if (req.method == "linkQualityEvent/getLinkQualityEvents") {
+                                        for (const [_, data] of Object.entries(type.timeseries)) {
+                                            var timestamp = data.timestamp;
+                                            var inter = key;
+                                            var jittertx = null;
+                                            var jitterrx = null;
+                                            var latencytx = null;
+                                            var latencyrx = null;
+                                            var pckttx = null;
+                                            var pcktrx = null;
+                                            if (data.metadata.detail){
+                                                var detail = data.metadata.detail;
+                                                jitterrx = detail.jitterMsRx;    
+                                                jittertx = detail.jitterMsTx;
+                                                latencyrx = detail.latencyMsRx;
+                                                latencytx = detail.latencyMsTx;
+                                                pcktrx = detail.lossPctRx;
+                                                pckttx = detail.lossPctTx
+                                            }
+                                            var aqoe  = data.score[0];
+                                            var vqoe  = data.score[1];
+                                            var tqoe  = data.score[2];
+                                            
+                                            items.push([timestamp,inter,jittertx,jitterrx,latencytx,latencyrx,pckttx,pcktrx,aqoe,vqoe,tqoe]); 
+
                                         }
-                                        for (const [_ , val] of Object.entries(dir.data)) {
-                                            items.push([
-                                                timestamp,
-                                                typeval,
-                                                dir.metric,
-                                                val
-                                            ]) 
-                                            timestamp += dir.tickInterval;
+                                    } else {
+                                        for (const [_, dir] of Object.entries(type.series)) {
+                                            var typeval = "";
+                                            var timestamp = 0;
+                                            switch(req.method){
+                                                    case "metrics/getEdgeLinkSeries":
+                                                        timestamp = dir.startTime;
+                                                        typeval = type.link.interface;
+                                                        break;
+                                                    case "metrics/getEdgeAppSeries" :
+                                                        timestamp = new Date(dir.startTime).getTime();
+                                                        // using UI info to get the real name of application. Other option do an API call, but saving that.
+                                                        typeval = document.querySelectorAll("[data-id='"+type.name+"']")[0].innerText;
+                                                        break;
+                                                    case "metrics/getEdgeDestSeries":
+                                                    case "metrics/getEdgeDeviceSeries":
+                                                        timestamp = new Date(dir.startTime).getTime();
+                                                        typeval = type.name;
+                                                        break;
+                                            }
+                                            for (const [_ , val] of Object.entries(dir.data)) {
+                                                items.push([
+                                                    timestamp,
+                                                    typeval,
+                                                    dir.metric,
+                                                    val
+                                                ]) 
+                                                timestamp += dir.tickInterval;
+                                            }
                                         }
                                     }
-                                }
                                 // sending it to content script to handle the chrome.local.storage, so popup.js can fetch it.  
                                 window.postMessage(JSON.stringify({
                                     "type" :name,
                                     "date" :localISOTime,
                                     "value":items
                                 })); 
-                            }                  
                         }
+                      }
+                      }
                     } catch(err) {
                         console.log("Error in responseType try catch");
                         console.log(err);
