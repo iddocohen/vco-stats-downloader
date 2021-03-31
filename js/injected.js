@@ -94,7 +94,7 @@
                                           name = "Destinations";
                                           break;
                                     case "linkQualityEvent/getLinkQualityEvents":
-                                          items.push(["Timestamp", "Interface", "Jitter Tx (ms)", "Jitter Rx (ms)", "Latency Tx (ms)", "Latency Rx (ms)", "Packet loss (%) Tx", "Packet loss(%) Rx", "Voice QoE", "Video QoE", "Transactional QoE"]);
+                                          items.push(["Timestamp", "Interface UUID", "Jitter Tx (ms)", "Jitter Rx (ms)", "Latency Tx (ms)", "Latency Rx (ms)", "Packet loss (%) Tx", "Packet loss(%) Rx", "Voice QoE", "Video QoE", "Transactional QoE"]);
                                           name = "QoE";
                                           break;
          
