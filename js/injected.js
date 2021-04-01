@@ -69,6 +69,8 @@
                                 req.method == 'metrics/getEdgeAppSeries'   ||
                                 req.method == 'metrics/getEdgeDeviceSeries'||
                                 req.method == 'metrics/getEdgeDestSeries'  ||
+                                req.method == 'metrics/getEdgeStatusSeries'||
+                                req.method == 'edge/getEdgeSDWANPeers'     ||
                                 req.method == 'linkQualityEvent/getLinkQualityEvents'
                             ){
                                 var items = [];
@@ -94,14 +96,22 @@
                                           name = "Destinations";
                                           break;
                                     case "linkQualityEvent/getLinkQualityEvents":
-                                          items.push(["Timestamp", "Interface UUID", "Jitter Tx (ms)", "Jitter Rx (ms)", "Latency Tx (ms)", "Latency Rx (ms)", "Packet loss (%) Tx", "Packet loss(%) Rx", "Voice QoE", "Video QoE", "Transactional QoE"]);
+                                          items.push(["Timestamp", "Interface UUID", "Jitter tx (ms)", "Jitter rx (ms)", "Latency tx (ms)", "Latency rx (ms)", "Packet loss (%) Tx", "Packet loss (%) Rx", "Voice QoE", "Video QoE", "Transactional QoE"]);
                                           name = "QoE";
+                                          break;
+                                    case "metrics/getEdgeStatusSeries":
+                                          items.push(["Timestamp", "Metric", "Data (5 min avg)"]);
+                                          name = "Systems";
+                                          break;
+                                    case "edge/getEdgeSDWANPeers":
+                                          items.push(["Peer Name", "Peer Type", "No. paths in dead", "No. paths in stable", "No. paths in standby", "No. paths in unknown", "No. paths in unstable", "Total Paths", "After Voice QoE", "After Video QoE", "After Trans QoE", "Path QoE"])
+                                          name = "Paths";
                                           break;
          
                                 }
                                 // going through Object (from JSON) to get relevant pieces
-                                for (const [key, type] of Object.entries(resp.result)) {
-                                    if (req.method == "linkQualityEvent/getLinkQualityEvents") {
+                                if (req.method == "linkQualityEvent/getLinkQualityEvents") {
+                                    for (const [key, type] of Object.entries(resp.result)) {
                                         for (const [_, data] of Object.entries(type.timeseries)) {
                                             var timestamp = data.timestamp;
                                             var inter = key;
@@ -127,7 +137,37 @@
                                             items.push([timestamp,inter,jittertx,jitterrx,latencytx,latencyrx,pckttx,pcktrx,aqoe,vqoe,tqoe]); 
 
                                         }
-                                    } else {
+                                    }
+                                 } else if (req.method == "metrics/getEdgeStatusSeries"){
+                                    for (const [_, arr] of Object.entries(resp.result.series)) {
+                                        var timestamp = new Date(arr.startTime).getTime(); 
+                                        for (const [metric, data] of Object.entries(arr)) {
+                                            if ( metric != "startTime" && metric != "endTime"){
+                                                items.push([timestamp, metric, data]);
+                                            }
+                                        }
+                                    }
+                                 } else if (req.method == "edge/getEdgeSDWANPeers") {
+                                    if (resp.result.data){
+                                        for (const [_, val] of Object.entries(resp.result.data)) {
+                                           items.push([
+                                                val.peerName,
+                                                val.peerType,
+                                                val.pathStatusCount.dead,
+                                                val.pathStatusCount.stable,
+                                                val.pathStatusCount.standby,
+                                                val.pathStatusCount.unknown,
+                                                val.pathStatusCount.unstable,
+                                                val.pathStatusCount.total,
+                                                val.scoreAfterVoice,
+                                                val.scoreAfterVideo,
+                                                val.scoreAfterTrans,
+                                                val.pathQoe
+                                           ]); 
+                                        }
+                                    }
+                                 } else {
+                                    for (const [_, type] of Object.entries(resp.result)) {
                                         for (const [_, dir] of Object.entries(type.series)) {
                                             var typeval = "";
                                             var timestamp = 0;
@@ -157,15 +197,15 @@
                                                 timestamp += dir.tickInterval;
                                             }
                                         }
-                                    }
+                                  }
+                                }
                                 // sending it to content script to handle the chrome.local.storage, so popup.js can fetch it.  
                                 window.postMessage(JSON.stringify({
                                     "type" :name,
                                     "date" :localISOTime,
                                     "value":items
                                 })); 
-                        }
-                      }
+                         }
                       }
                     } catch(err) {
                         console.log("Error in responseType try catch");
