@@ -19,6 +19,10 @@ Depending on the demand, I might program a switch for enable/disable the plugin.
 
 ## Versions
 
+* 0.3:
+    * Supporting now Systems Statistics.
+    * Supporting now Paths statistics for Edges (new UI).
+    * Optimized Code
 * 0.2:
     * Supporting now QoE Statistics.
 
@@ -64,7 +68,7 @@ When using the extension, it will display under the development mode the followi
 
 "Synchronous XMLHttpRequest on the main thread is deprecated because of its detrimental effects to the end user's experience. For more help, check https://xhr.spec.whatwg.org/."
 
-I will fix it in a later stage, depending on demand. 
+This will be fixed automatically as soon as the UI will change (which will happen soon).
 
 ## Contributing
 
