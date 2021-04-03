@@ -45,6 +45,7 @@
                 // here you get the RESPONSE HEADERS
                 var responseHeaders = this.getAllResponseHeaders();
 
+
                 if ( this.responseType != 'blob' && this.responseText) {
                     // responseText is string or null
                     try {
@@ -58,12 +59,6 @@
                             var resp = JSON.parse(arr);
                             //console.log(req);
                             //console.log(resp);
-                            
-                            // not sure if it is a good idea to solve it this way but here we offset the timezone first before using that
-                            var tzoffset = (new Date()).getTimezoneOffset() * 60000; //offset in milliseconds
-
-                            // extracting only the time from current timezone
-                            var localISOTime = (new Date(Date.now() - tzoffset)).toISOString().replace(/^[^:]*([0-2]\d:[0-5]\d).*$/, "$1"); 
                             
                             if (req.method == 'metrics/getEdgeLinkSeries'  ||
                                 req.method == 'metrics/getEdgeAppSeries'   ||
@@ -202,7 +197,6 @@
                                 // sending it to content script to handle the chrome.local.storage, so popup.js can fetch it.  
                                 window.postMessage(JSON.stringify({
                                     "type" :name,
-                                    "date" :localISOTime,
                                     "value":items
                                 })); 
                          }
