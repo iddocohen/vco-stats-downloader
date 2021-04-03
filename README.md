@@ -4,7 +4,11 @@ The VMware SD-WAN Orchestrator (VCO) presents a lot of statistical graphs; howev
 
 This extension, tries to solve that problem. 
 
-It gives the user the ability to download the statistics as CSV after a given webpage (Transport, Destination, Source, etc.) is opened. 
+It gives the user the ability to download the statistics as CSV after a given webpage is opened.
+
+The following content will be make available as downloadable CSV:
+ 
+![VCO Statistics Downloader Demo](https://github.com/iddocohen/vco-stats-downloader/blob/main/screenshot.png?raw=true)
 
 Enjoy!
 
