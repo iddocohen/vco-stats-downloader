@@ -19,6 +19,9 @@ Depending on the demand, I might program a switch for enable/disable the plugin.
 
 ## Versions
 
+* 0.4: 
+    * Supporting now remote diag functionality (flows, paths, routes).
+
 * 0.3:
     * Supporting now Systems Statistics.
     * Supporting now Paths statistics for Edges (new UI).
