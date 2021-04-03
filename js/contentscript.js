@@ -41,14 +41,16 @@ window.addEventListener("message", function(request) {
     }
 }, true);
 
-function route_dump_parse (obj) {
+function normal_parse (obj) {
     var items = []; 
-    var h = []; 
-    var header = obj.find(".vce-result-header-row");
-    var data  = obj.find(".vce-result-data-row");
+    var header = obj.find(".vce-result-header").find(".vce-result-header-row");
+    var data  = obj.find(".vce-result-data").find(".vce-result-data-row");
 
+    var h = []; 
     header.find("span").each(function () {
-        h.push($(this).text());
+        if ($(this).attr('class') != "desc"){
+            h.push($(this).text().replace(/\n|\r/g, "").replace(/\s+/g, " "));
+        }
     });
     items.push(h);
 
@@ -64,7 +66,11 @@ function route_dump_parse (obj) {
 };
 
 const parsing = {
-    "ROUTE_DUMP": route_dump_parse
+    "FLOW_DUMP"       : ["List Active Flows",normal_parse],
+    "ROUTE_DUMP"      : ["Route Table Dump", normal_parse],
+    "BGP_VIEW"        : ["List BGP Routes", normal_parse],
+    "BGP_REDIS_DUMP"  : ["List BGP Redistributed Routes", normal_parse],
+    "PATHS_DUMP"      : ["List Paths", normal_parse]
 }
 
 if (window.location.href.indexOf("remote-diagnostics") > -1) {
@@ -77,8 +83,8 @@ if (window.location.href.indexOf("remote-diagnostics") > -1) {
                $(document).ready(function checkContainer(){
                     if ($('#'+key+'-results').find('.vce-result-tbl').is(':visible')){
                         const found = $('#'+key+'-results').find('.vce-result-tbl');
-                        const arr = parsing[key](found);  
-                        storeAndsendMessage(key,arr);
+                        const arr = parsing[key][1](found);  
+                        storeAndsendMessage(parsing[key][0],arr);
                     }else{
                         setTimeout(checkContainer, 100); //wait 100 ms, then try again
                     }
