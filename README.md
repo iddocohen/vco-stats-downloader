@@ -1,25 +1,26 @@
 VCO Statistics Downloader - Chrome Extension
 =====================================
-The VMware SD-WAN Orchestrator (VCO) presents a lot of statistical graphs; however, these data sets for the graphs are not downloadable when the graphs are called. 
+The VMware SD-WAN Orchestrator (VCO) presents a lot of statistical graphs and remote diagnostic functionalities; however, some of these sets of data are not downloadable for the user in real time.
 
-This extension, tries to solve that problem. 
+This extension gives the user the ability to download the graph statistics and remote diagnostics tables as soon as one is either visiting the website itself or executing remote diagnostic functionality.
 
-It gives the user the ability to download the statistics as CSV after a given webpage is opened.
+![VCO Statistics Downloader Demo](https://github.com/iddocohen/vco-stats-downloader/blob/main/demo.gif?raw=true)
 
-The following content will be make available as downloadable CSV:
+As of today, the following content gets extracted and given as CSV to download:
 
-<img src="https://github.com/iddocohen/vco-stats-downloader/blob/main/screenshot.png?raw=true" alt="Downloadable Content for CSV" width="50%" height="50%" align="center"> 
+<img src="https://github.com/iddocohen/vco-stats-downloader/blob/main/screenshot.png?raw=true" alt="Downloadable Content for CSV" width="50%" height="50%"> 
+
+More functionality will be added, as demand increases.
 
 Enjoy!
 
 ## Warning
 
-This extension injects javascript code into the existing VCO website. 
+This extension injects javascript code into the existing website. 
 
-As such, please before filling any bugs around UI to support, remove the extension first and try again.
+As such, please before filling any bugs around UI to VMware support, remove the extension first and try again to ensure that the extension does not break anything.
 
 Depending on the demand, I might program a switch for enable/disable the plugin. 
-
 
 ## Versions
 
@@ -36,9 +37,6 @@ Depending on the demand, I might program a switch for enable/disable the plugin.
 * 0.1:
     * First release.
 
-## Demo
-
-![VCO Statistics Downloader Demo](https://github.com/iddocohen/vco-stats-downloader/blob/main/demo.gif?raw=true)
 
 ## Tested
 
@@ -47,7 +45,7 @@ System tested on:
 * Google Chrome version: 89.0.4389.90 (Official Build) (x86_64)
 * VCO version: 4.2.0 
 
-Different VCO versions could work as well but not tested.
+Different VCO versions could work but not tested.
 
 ## Install
 
