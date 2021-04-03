@@ -8,7 +8,7 @@ It gives the user the ability to download the statistics as CSV after a given we
 
 The following content will be make available as downloadable CSV:
 
-<img src="https://github.com/iddocohen/vco-stats-downloader/blob/main/screenshot.png?raw=true" alt="Downloadable Content for CSV" width="50%" height="50%"> 
+<img src="https://github.com/iddocohen/vco-stats-downloader/blob/main/screenshot.png?raw=true" alt="Downloadable Content for CSV" width="50%" height="50%" align="center"> 
 
 Enjoy!
 
@@ -24,7 +24,7 @@ Depending on the demand, I might program a switch for enable/disable the plugin.
 ## Versions
 
 * 0.4: 
-    * Supporting now remote diag functionality (flows, paths, routes).
+    * Supporting now remote diag functionality.
 
 * 0.3:
     * Supporting now Systems Statistics.
