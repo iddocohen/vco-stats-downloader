@@ -7,8 +7,8 @@ This extension, tries to solve that problem.
 It gives the user the ability to download the statistics as CSV after a given webpage is opened.
 
 The following content will be make available as downloadable CSV:
- 
-![Downloadable Content for CSV](https://github.com/iddocohen/vco-stats-downloader/blob/main/screenshot.png?raw=true)
+
+<img src="https://github.com/iddocohen/vco-stats-downloader/blob/main/screenshot.png?raw=true" alt="Downloadable Content for CSV" width="50%" height="50%"> 
 
 Enjoy!
 
