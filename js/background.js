@@ -1,8 +1,22 @@
 var vcocnt;
 chrome.runtime.onInstalled.addListener(function() {
-    chrome.storage.local.clear(function() {
+    chrome.storage.local.get(function(result) {
         if (chrome.runtime.lastError) {
-            console.error(chrome.runtime.lastError);
+            console.log("Error retrieving index: " + chrome.runtime.lastError);
+            return;
+        }
+        for (const [ukey, _] of Object.entries(result)){
+            if (ukey.includes("vcostat:")) {
+                console.log("Found key to delete: "+ukey);
+                chrome.storage.local.remove([ukey],function(){
+                    if (chrome.runtime.lastError) {
+                    
+                        console.log("Could not delete key: " + chrome.runtime.lastError);
+                    }else{
+                        console.log("Deleted");
+                    }
+                });
+            }
         }
     });
     vcocnt = 0;

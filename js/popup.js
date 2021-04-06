@@ -11,6 +11,7 @@ function exportCSVFile(items, fileTitle) {
     return link;
 }
 
+const byteSize = str => new Blob([str]).size;
 
 $(function () {
     chrome.storage.local.get(function(result){
@@ -18,13 +19,15 @@ $(function () {
             console.log("Error retrieving index: " + chrome.runtime.lastError);
             return;
         }
-        for (const [key,value] of Object.entries(result)) {
+        for (const [ukey,value] of Object.entries(result)) {
+           var key = ukey.split(":")[1];
            var match = $('div[data-title="Name"]:contains('+key+')');
            if (match.length > 0){
                 var data = JSON.parse(value);
                 var date = match.next(".cell");
                 var link = match.next(".cell").next(".cell");
-                date.text(data.date);
+                var rdate = data.date.split("T");
+                date.text(rdate[0]+" "+rdate[1].replace(/^[^:]*([0-2]\d:[0-5]\d).*$/, "$1"));
                 link.html(exportCSVFile(data.value,key));
                 //match.parent().css("visibility","");
                 chrome.runtime.sendMessage({download: "clear"});

@@ -16,9 +16,9 @@ function storeAndsendMessage(type, value) {
     var tzoffset = (new Date()).getTimezoneOffset() * 60000; //offset in milliseconds
 
     // extracting only the time from current timezone
-    var localISOTime = (new Date(Date.now() - tzoffset)).toISOString().replace(/^[^:]*([0-2]\d:[0-5]\d).*$/, "$1"); 
+    var localISOTime = (new Date(Date.now() - tzoffset)).toISOString(); 
     var store = {};
-    store[type] = JSON.stringify({
+    store["vcostat:"+type] = JSON.stringify({
             "date":localISOTime,
             "value":value
     });
@@ -49,6 +49,7 @@ function normal_parse (obj) {
     var h = []; 
     header.find("span").each(function () {
         if ($(this).attr('class') != "desc"){
+            // replacing carriage return and too many spaces from header
             h.push($(this).text().replace(/\n|\r/g, "").replace(/\s+/g, " "));
         }
     });
@@ -95,68 +96,3 @@ if (window.location.href.indexOf("remote-diagnostics") > -1) {
         console.log(err);
     }
 }
-
-/*
-
-if (window.location.href.indexOf("remote-diagnostics") > -1) {
-   jQuery(document).ready(checkContainer);
-   function checkContainer () {
-        if ($('.runTest').is(':visible')){ 
-            console.log("test");
-            $(document).on('click','.runTest', function(event) {
-                console.log("test2");
-                event.stopPropagation();
-                event.stopImmediatePropagation();
-                console.log($(this));
-            });
-        } else {
-            setTimeout(checkContainer, 500); //wait 50 ms, then try again
-        }
-   }
-} 
-*/
-
-/*
-function CheckRemoteDiagnostic() { 
-        const targetNode = document.getElementById("remoteTestList");
-
-        if(!targetNode) {
-            //The node we need does not exist yet.
-            //Wait 500ms and try again
-            window.setTimeout(CheckRemoteDiagnostic,5000);
-            return;
-        }
-
-        // Options for the observer (which mutations to observe)
-        const config = { attributes: true, childList: true, subtree: true };
-
-        // Callback function to execute when mutations are observed
-        const callback = function(mutationsList, observer) {
-            // Use traditional 'for loops' for IE 11
-            for(const mutation of mutationsList) {
-                if (mutation.type === 'childList') {
-                    //console.log(' node has been added or removed.');
-                    if (mutation.addedNodes.length > 0 ) {
-                        console.log(mutation);
-                        if ($(".result")){
-                            console.log($(".result"));
-                        }
-                    }
-                }
-                else if (mutation.type === 'attributes') {
-                    console.log('The ' + mutation.attributeName + ' attribute was modified.');
-                }
-            }
-        };
-
-        // Create an observer instance linked to the callback function
-        const observer = new MutationObserver(callback);
-
-        // Start observing the target node for configured mutations
-        observer.observe(targetNode, config);
-}
-
-if (window.location.href.indexOf("remote-diagnostics") > -1) {
-    CheckRemoteDiagnostic();
-}
-*/
