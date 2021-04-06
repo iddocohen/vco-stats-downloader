@@ -24,9 +24,11 @@ Depending on the demand, I might program a switch for enable/disable the plugin.
 
 ## Versions
 
+* 0.5:
+    * Fixing local storage deleting.
+    * Fixing date in the menu. 
 * 0.4: 
     * Supporting now remote diag functionality.
-
 * 0.3:
     * Supporting now Systems Statistics.
     * Supporting now Paths statistics for Edges (new UI).
