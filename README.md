@@ -24,6 +24,9 @@ Depending on the demand, I might program a switch for enable/disable the plugin.
 
 ## Versions
 
+* 0.6:
+    * Fixing file location for extension
+    * Supporting now list of routes per prefix (route detail output)
 * 0.5:
     * Fixing local storage deleting.
     * Fixing date in the menu. 
@@ -35,10 +38,8 @@ Depending on the demand, I might program a switch for enable/disable the plugin.
     * Optimized Code
 * 0.2:
     * Supporting now QoE Statistics.
-
 * 0.1:
     * First release.
-
 
 ## Tested
 
