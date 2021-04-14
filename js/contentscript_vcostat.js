@@ -4,7 +4,7 @@
  */
 
 var s = document.createElement('script');
-s.src = chrome.extension.getURL('js/injected.js');
+s.src = chrome.extension.getURL('js/injected_vcostat.js');
 s.onload = function() {
     this.remove();
 };
@@ -69,6 +69,7 @@ function normal_parse (obj) {
 const parsing = {
     "FLOW_DUMP"       : ["List Active Flows",normal_parse],
     "ROUTE_DUMP"      : ["Route Table Dump", normal_parse],
+    "ROUTES_DETAIL"   : ["List Routes per Prefix",normal_parse],
     "BGP_VIEW"        : ["List BGP Routes", normal_parse],
     "BGP_REDIS_DUMP"  : ["List BGP Redistributed Routes", normal_parse],
     "PATHS_DUMP"      : ["List Paths", normal_parse]

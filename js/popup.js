@@ -11,9 +11,9 @@ function exportCSVFile(items, fileTitle) {
     return link;
 }
 
-const byteSize = str => new Blob([str]).size;
 
 $(function () {
+    const byteSize = str => new Blob([str]).size;
     chrome.storage.local.get(function(result){
         if (chrome.runtime.lastError) {
             console.log("Error retrieving index: " + chrome.runtime.lastError);
