@@ -24,6 +24,8 @@ Depending on the demand, I might program a switch for enable/disable the plugin.
 
 ## Versions
 
+* 0.7:
+    * Fixing plugin not working when changing page.
 * 0.6:
     * Fixing file location for extension
     * Supporting now list of routes per prefix (route detail output)
