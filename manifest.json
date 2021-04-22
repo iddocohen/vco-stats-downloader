@@ -3,7 +3,7 @@
 
   "name": "VCO Statistics Downloader",
   "description": "Download statistics from VMware SD-WAN Orchestrator as CSV",
-  "version": "0.6",
+  "version": "0.7",
 
   "icons": { 
         "16": "icon/icon16-white.png",
@@ -29,7 +29,7 @@
   "content_scripts": [
     {
       "matches": ["*://*.velocloud.net/*"],
-      "run_at": "document_start",
+      "run_at": "document_end",
       "js": ["js/jquery_vcostat.js","js/contentscript_vcostat.js", "js/injected_vcostat.js"]
     }
   ],

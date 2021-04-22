@@ -66,7 +66,7 @@ function normal_parse (obj) {
     return items;
 };
 
-const parsing = {
+var parsing = {
     "FLOW_DUMP"       : ["List Active Flows",normal_parse],
     "ROUTE_DUMP"      : ["Route Table Dump", normal_parse],
     "ROUTES_DETAIL"   : ["List Routes per Prefix",normal_parse],
