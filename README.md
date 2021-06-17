@@ -47,8 +47,8 @@ Depending on the demand, I might program a switch for enable/disable the plugin.
 
 System tested on:
 
-* Google Chrome version: 89.0.4389.90 (Official Build) (x86_64)
-* VCO version: 4.2.0 
+* Google Chrome version: 89 and 91
+* VCO version: 4.2.0+
 
 Different VCO versions could work but not tested.
 
