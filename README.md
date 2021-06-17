@@ -23,7 +23,8 @@ As such, please before filling any bugs around UI to VMware support, remove the 
 Depending on the demand, I might program a switch for enable/disable the plugin. 
 
 ## Versions
-
+* 0.8:
+    * Fixing CSS for Chrome version 91
 * 0.7:
     * Fixing plugin not working when changing page.
 * 0.6:
