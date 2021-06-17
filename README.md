@@ -23,6 +23,9 @@ As such, please before filling any bugs around UI to VMware support, remove the 
 Depending on the demand, I might program a switch for enable/disable the plugin. 
 
 ## Versions
+* 0.9:
+    * Adding Cloud Web Security (CWS) for "Web Log" to download
+    * Fixing QoE for 4.4 release. 
 * 0.8:
     * Fixing CSS for Chrome version 91
 * 0.7:
@@ -49,7 +52,7 @@ Depending on the demand, I might program a switch for enable/disable the plugin.
 System tested on:
 
 * Google Chrome version: 89 and 91
-* VCO version: 4.2.0+
+* VCO version: 4.2.0, 4.2.1, 4.4 
 
 Different VCO versions could work but not tested.
 

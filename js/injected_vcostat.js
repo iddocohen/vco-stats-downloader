@@ -49,18 +49,33 @@
                 if ( this.responseType != 'blob' && this.responseText) {
                     // responseText is string or null
                     try {
-
                         // here you get RESPONSE TEXT (BODY), in JSON format, so you can use JSON.parse
                         var arr = this.responseText;
 
-                        // need to only handel POST requests for VCO APIs
-                        if (this._method == "POST"){ 
-                            var req = JSON.parse(this._requestHeaders);
-                            var resp = JSON.parse(arr);
+                        var req = {};
+                        var resp = {};
+                        // new API v2 GET requests are used as well for VCO API
+                        if (this._method == "GET") {
+                            var cws_logs = /\/api\/cws\/.*\/logs/gm;
+                            switch (true) {
+                                case cws_logs.test(myUrl):
+                                    req["method"] = "api/cws/logs";
+                                    resp = JSON.parse(arr);
+                                    break;
+                            }
+                        // old and new API v2 POST requests are used
+                        }else if (this._method == "POST") {
+                            req = JSON.parse(this._requestHeaders);
+                            resp = JSON.parse(arr);
+                        }
+                        if (req.hasOwnProperty('method')){ 
+                            //var req = JSON.parse(this._requestHeaders);
+                            //var resp = JSON.parse(arr);
                             //console.log(req);
                             //console.log(resp);
-                            
-                            if (req.method == 'metrics/getEdgeLinkSeries'  ||
+
+                            if (req.method == 'api/cws/logs'               ||
+                                req.method == 'metrics/getEdgeLinkSeries'  ||
                                 req.method == 'metrics/getEdgeAppSeries'   ||
                                 req.method == 'metrics/getEdgeDeviceSeries'||
                                 req.method == 'metrics/getEdgeDestSeries'  ||
@@ -74,6 +89,19 @@
                                 // adding the headers of the CSV as first entry in the array
                                 switch(req.method){
                                     // TODO: there is no good way to figure out the difference between Transport or Business Priority (same API). Hence sending it to the same row in popup.html.
+                                    case "api/cws/logs": 
+                                          const keys = resp.data[0];
+                                          if (keys) {
+                                             var header = [];
+                                             for (var [key, _] of Object.entries(keys)){
+                                                key = key.replace(/([A-Z])/g, ' $1').trim();
+                                                key = key.charAt(0).toUpperCase() + key.slice(1);
+                                                header.push(key);
+                                             }; 
+                                             items.push(header); 
+                                             name = "Web Logs";
+                                          }      
+                                          break;
                                     case "metrics/getEdgeLinkSeries": 
                                           items.push(["Timestamp", "Interface", "Metric", "Data"]); 
                                           name = "Transport/Business Priority";
@@ -105,7 +133,20 @@
          
                                 }
                                 // going through Object (from JSON) to get relevant pieces
-                                if (req.method == "linkQualityEvent/getLinkQualityEvents") {
+                        
+                                if (req.method == "api/cws/logs") {
+                                    for (const [_, arr] of Object.entries(resp.data)) {
+                                        var values = [];
+                                        for (const [_, value] of Object.entries(arr)) {
+                                            if (Array.isArray(value)){
+                                               values.push(value.join("|"));
+                                            } else {
+                                               values.push(value);
+                                            }
+                                        }
+                                        items.push(values);
+                                    }
+                                } else if (req.method == "linkQualityEvent/getLinkQualityEvents") {
                                     for (const [key, type] of Object.entries(resp.result)) {
                                         for (const [_, data] of Object.entries(type.timeseries)) {
                                             var timestamp = data.timestamp;
@@ -116,6 +157,9 @@
                                             var latencyrx = null;
                                             var pckttx = null;
                                             var pcktrx = null;
+                                            var aqoe   = null;
+                                            var vqoe   = null;
+                                            var tqoe   = null;
                                             if (data.metadata.detail){
                                                 var detail = data.metadata.detail;
                                                 jitterrx = detail.jitterMsRx;    
@@ -125,9 +169,11 @@
                                                 pcktrx = detail.lossPctRx;
                                                 pckttx = detail.lossPctTx
                                             }
-                                            var aqoe  = data.score[0];
-                                            var vqoe  = data.score[1];
-                                            var tqoe  = data.score[2];
+                                            if (data.score) {
+                                                aqoe  = data.score[0];
+                                                vqoe  = data.score[1];
+                                                tqoe  = data.score[2];
+                                            }
                                             
                                             items.push([timestamp,inter,jittertx,jitterrx,latencytx,latencyrx,pckttx,pcktrx,aqoe,vqoe,tqoe]); 
 
