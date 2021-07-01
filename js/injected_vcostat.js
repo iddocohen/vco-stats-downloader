@@ -25,7 +25,8 @@
         this.addEventListener('load', function() {
             var endTime = (new Date()).toISOString();
 
-            var myUrl = this._url ? this._url.toLowerCase() : this._url;
+            //var myUrl = this._url ? this._url.toLowerCase() : this._url;
+            var myUrl = this._url;
             if(myUrl) {
 
                 if (postData) {
@@ -54,12 +55,37 @@
 
                         var req = {};
                         var resp = {};
+                        var items = [];
+                        var name = "";
                         // new API v2 GET requests are used as well for VCO API
                         if (this._method == "GET") {
-                            var cws_logs = /\/api\/cws\/.*\/logs/gm;
+                            var cws_logs        = /\/api\/cws\/.*\/logs/;
+                            var cws_topusers    = /\/api\/cws\/.*\/topUsers/; 
+                            var cws_topsites    = /\/api\/cws\/.*\/topSites/; 
+                            var cws_as          = /\/api\/cws\/.*\/actionsSummary/; 
+                            var cws_topcat      = /\/api\/cws\/.*\/topCategories/; 
+                            var cws_threato     = /\/api\/cws\/.*\/threatOrigins/;
+                            var cws_threatt     = /\/api\/cws\/.*\/threatTypes/;
+                            var cws_threatbyu   = /\/api\/cws\/.*\/threatsByUsers/;
+                            var cws_vs          = /\/api\/cws\/.*\/vulnerableServices/;
                             switch (true) {
                                 case cws_logs.test(myUrl):
                                     req["method"] = "api/cws/logs";
+                                    resp = JSON.parse(arr);
+                                    break;
+                                case cws_topusers.test(myUrl):
+                                case cws_topsites.test(myUrl):
+                                case cws_as.test(myUrl):
+                                case cws_topcat.test(myUrl):
+                                case cws_threato.test(myUrl):
+                                case cws_threatt.test(myUrl):
+                                case cws_threatbyu.test(myUrl):
+                                case cws_vs.test(myUrl):
+                                    req["method"] = "api/cws/threat&traffic";
+                                    var parts = myUrl.split("/");
+                                    name = parts.pop().split("?")[0];
+                                    name = name.replace(/([A-Z])/g, ' $1').trim();
+                                    name = name.charAt(0).toUpperCase() + name.slice(1);
                                     resp = JSON.parse(arr);
                                     break;
                             }
@@ -75,6 +101,7 @@
                             //console.log(resp);
 
                             if (req.method == 'api/cws/logs'               ||
+                                req.method == 'api/cws/threat&traffic'  ||
                                 req.method == 'metrics/getEdgeLinkSeries'  ||
                                 req.method == 'metrics/getEdgeAppSeries'   ||
                                 req.method == 'metrics/getEdgeDeviceSeries'||
@@ -83,14 +110,18 @@
                                 req.method == 'edge/getEdgeSDWANPeers'     ||
                                 req.method == 'linkQualityEvent/getLinkQualityEvents'
                             ){
-                                var items = [];
-                                var name = "";
 
                                 // adding the headers of the CSV as first entry in the array
                                 switch(req.method){
                                     // TODO: there is no good way to figure out the difference between Transport or Business Priority (same API). Hence sending it to the same row in popup.html.
+                                    case "api/cws/threat&traffic":
                                     case "api/cws/logs": 
-                                          const keys = resp.data[0];
+                                          if (req.method == "api/cws/logs") {
+                                            var keys = resp.data[0];
+                                            name = "Web Logs";
+                                          } else {
+                                            var keys = resp[0].result[0];
+                                          }
                                           if (keys) {
                                              var header = [];
                                              for (var [key, _] of Object.entries(keys)){
@@ -99,8 +130,7 @@
                                                 header.push(key);
                                              }; 
                                              items.push(header); 
-                                             name = "Web Logs";
-                                          }      
+                                          }
                                           break;
                                     case "metrics/getEdgeLinkSeries": 
                                           items.push(["Timestamp", "Interface", "Metric", "Data"]); 
@@ -134,8 +164,13 @@
                                 }
                                 // going through Object (from JSON) to get relevant pieces
                         
-                                if (req.method == "api/cws/logs") {
-                                    for (const [_, arr] of Object.entries(resp.data)) {
+                                if (req.method == "api/cws/logs" || req.method == "api/cws/threat&traffic") {
+                                    if (req.method == "api/cws/logs") {
+                                        var data = resp.data; 
+                                    } else {
+                                        var data = resp[0].result;
+                                    }
+                                    for (const [_, arr] of Object.entries(data)) {
                                         var values = [];
                                         for (const [_, value] of Object.entries(arr)) {
                                             if (Array.isArray(value)){
@@ -248,7 +283,6 @@
                          }
                       }
                     } catch(err) {
-                        console.log("Error in responseType try catch");
                         console.log(err);
                     }
                 }

@@ -23,6 +23,9 @@ As such, please before filling any bugs around UI to VMware support, remove the 
 Depending on the demand, I might program a switch for enable/disable the plugin. 
 
 ## Versions
+* 1.0:
+    * Changed UI to accomodate more data
+    * Supporting now "Threat Analytics" and "Traffic Analytics" statistics of CWS.
 * 0.9:
     * Adding Cloud Web Security (CWS) for "Web Log" to download
     * Fixing QoE for 4.4 release. 

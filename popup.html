@@ -6,14 +6,54 @@
         <script src="js/jquery_vcostat.js"></script>    
         <script src="js/popup.js"></script>
         <link media="screen" type="text/css" rel="stylesheet"  href="css/popup.css">
+        <style>
+            /* Style the tab */
+            .tab {
+              overflow: hidden;
+              border: 1px solid #ccc;
+              background-color: #f1f1f1;
+            }
+
+            /* Style the buttons inside the tab */
+            .tab button {
+              background-color: inherit;
+              float: left;
+              border: none;
+              outline: none;
+              cursor: pointer;
+              padding: 14px 16px;
+              transition: 0.3s;
+              font-size: 17px;
+            }
+
+            /* Change background color of buttons on hover */
+            .tab button:hover {
+              background-color: #ddd;
+            }
+
+            /* Create an active/current tablink class */
+            .tab button.active {
+              background-color: #ccc;
+            }
+
+            /* Style the tab content */
+            .row {
+              display: none;
+            }
+            .header {
+              display: table-row;
+            }
+        </style>
     </head>
     <body>
+        <div class="tab">
+            <button class="tablinks" id="Monitor">Monitor</button>
+            <button class="tablinks" id="RD">Remote Diagnostic</button>
+            <button class="tablinks" id="CWS">CWS</button>
+        </div> 
         <div class="wrapper">
             <div class="table">
                 <div class="row header">
-                    <div class="cell">
-                        From
-                    </div>
                     <div class="cell">
                         Statistics
                     </div>
@@ -24,10 +64,7 @@
                         Link
                     </div>
                 </div>
-                <div class="row">
-                    <div class="cell" data-title="From">
-                        Monitor
-                    </div>
+                <div class="Monitor row">
                     <div class="cell" data-title="Name">
                         QoE
                     </div>
@@ -36,10 +73,7 @@
                     <div class="cell" data-title="Link">
                     </div>
                 </div>
-                <div class="row">
-                    <div class="cell" data-title="From">
-                        Monitor
-                    </div>
+                <div class="Monitor row">
                     <div class="cell" data-title="Name">
                         Transport/Business Priority
                     </div>
@@ -48,10 +82,7 @@
                     <div class="cell" data-title="Link">
                     </div>
                 </div>
-                <div class="row">
-                    <div class="cell" data-title="From">
-                        Monitor
-                    </div>
+                <div class="Monitor row">
                     <div class="cell" data-title="Name">
                         Applications
                     </div>
@@ -60,10 +91,7 @@
                     <div class="cell" data-title="Link">
                     </div>
                 </div>
-                <div class="row">
-                    <div class="cell" data-title="From">
-                        Monitor
-                    </div>
+                <div class="Monitor row">
                     <div class="cell" data-title="Name">
                         Sources
                     </div>
@@ -72,10 +100,7 @@
                     <div class="cell" data-title="Link">
                     </div>
                 </div>
-                <div class="row">
-                    <div class="cell" data-title="From">
-                        Monitor
-                    </div>
+                <div class="Monitor row">
                     <div class="cell" data-title="Name">
                         Destinations
                     </div>
@@ -84,10 +109,7 @@
                     <div class="cell" data-title="Link">
                     </div>
                 </div>
-                <div class="row">
-                    <div class="cell" data-title="From">
-                        Monitor
-                    </div>
+                <div class="Monitor row">
                     <div class="cell" data-title="Name">
                         Systems
                     </div>
@@ -96,10 +118,7 @@
                     <div class="cell" data-title="Link">
                     </div>
                 </div>
-                <div class="row">
-                    <div class="cell" data-title="From">
-                        Monitor (in new UI)
-                    </div>
+                <div class="Monitor row">
                     <div class="cell" data-title="Name">
                         Paths
                     </div>
@@ -108,22 +127,7 @@
                     <div class="cell" data-title="Link">
                     </div>
                 </div>
-                <div class="row">
-                     <div class="cell" data-title="From">
-                        Cloud Web Security (in new UI)
-                    </div>
-                    <div class="cell" data-title="Name">
-                        Web Logs
-                    </div>
-                    <div class="cell" data-title="Created">
-                    </div>
-                    <div class="cell" data-title="Link">
-                    </div>
-                </div>
-                <div class="row">
-                     <div class="cell" data-title="From">
-                        Remote Diag
-                    </div>
+                <div class="RD row">
                     <div class="cell" data-title="Name">
                         Route Table Dump
                     </div>
@@ -132,10 +136,7 @@
                     <div class="cell" data-title="Link">
                     </div>
                 </div>
-                <div class="row">
-                     <div class="cell" data-title="From">
-                        Remote Diag
-                    </div>
+                <div class="RD row">
                     <div class="cell" data-title="Name">
                         List Routes per Prefix
                     </div>
@@ -144,10 +145,7 @@
                     <div class="cell" data-title="Link">
                     </div>
                 </div> 
-                <div class="row">
-                     <div class="cell" data-title="From">
-                        Remote Diag
-                    </div>
+                <div class="RD row">
                     <div class="cell" data-title="Name">
                         List Paths
                     </div>
@@ -156,10 +154,7 @@
                     <div class="cell" data-title="Link">
                     </div>
                 </div>
-                <div class="row">
-                     <div class="cell" data-title="From">
-                        Remote Diag
-                    </div>
+                <div class="RD row">
                     <div class="cell" data-title="Name">
                         List Active Flows
                     </div>
@@ -168,10 +163,7 @@
                     <div class="cell" data-title="Link">
                     </div>
                 </div>
-                <div class="row">
-                     <div class="cell" data-title="From">
-                        Remote Diag
-                    </div>
+                <div class="RD row">
                     <div class="cell" data-title="Name">
                         List BGP Routes
                     </div>
@@ -180,10 +172,7 @@
                     <div class="cell" data-title="Link">
                     </div>
                 </div>
-                <div class="row">
-                     <div class="cell" data-title="From">
-                        Remote Diag
-                    </div>
+                <div class="RD row">
                     <div class="cell" data-title="Name">
                         List BGP Redistributed Routes
                     </div>
@@ -192,6 +181,88 @@
                     <div class="cell" data-title="Link">
                     </div>
                 </div>
+                <div class="CWS row">
+                    <div class="cell" data-title="Name">
+                        Web Logs
+                    </div>
+                    <div class="cell" data-title="Created">
+                    </div>
+                    <div class="cell" data-title="Link">
+                    </div>
+                </div>
+                <div class="CWS row">
+                    <div class="cell" data-title="Name">
+                        Top Users
+                    </div>
+                    <div class="cell" data-title="Created">
+                    </div>
+                    <div class="cell" data-title="Link">
+                    </div>
+                </div>
+                 <div class="CWS row">
+                    <div class="cell" data-title="Name">
+                        Top Sites
+                    </div>
+                    <div class="cell" data-title="Created">
+                    </div>
+                    <div class="cell" data-title="Link">
+                    </div>
+                </div>
+                 <div class="CWS row">
+                    <div class="cell" data-title="Name">
+                        Actions Summary
+                    </div>
+                    <div class="cell" data-title="Created">
+                    </div>
+                    <div class="cell" data-title="Link">
+                    </div>
+                </div>
+                 <div class="CWS row">
+                    <div class="cell" data-title="Name">
+                        Top Categories
+                    </div>
+                    <div class="cell" data-title="Created">
+                    </div>
+                    <div class="cell" data-title="Link">
+                    </div>
+                </div>
+                <div class="CWS row">
+                    <div class="cell" data-title="Name">
+                        Threat Origins
+                    </div>
+                    <div class="cell" data-title="Created">
+                    </div>
+                    <div class="cell" data-title="Link">
+                    </div>
+                </div>
+                 <div class="CWS row">
+                    <div class="cell" data-title="Name">
+                        Threat Types
+                    </div>
+                    <div class="cell" data-title="Created">
+                    </div>
+                    <div class="cell" data-title="Link">
+                    </div>
+                </div>
+                 <div class="CWS row">
+                    <div class="cell" data-title="Name">
+                        Threats By Users
+                    </div>
+                    <div class="cell" data-title="Created">
+                    </div>
+                    <div class="cell" data-title="Link">
+                    </div>
+                </div>
+                 <div class="CWS row">
+                    <div class="cell" data-title="Name">
+                        Vulnerable Services
+                    </div>
+                    <div class="cell" data-title="Created">
+                    </div>
+                    <div class="cell" data-title="Link">
+                    </div>
+                </div>
+
              </div>
         </div>
     </body>
