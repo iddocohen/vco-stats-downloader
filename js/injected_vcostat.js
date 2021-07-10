@@ -12,6 +12,36 @@
         this._requestHeaders = {};
         this._startTime = (new Date()).toISOString();
 
+        this._asc = function(arr) {
+            return arr.sort((a, b) => a - b);
+        };
+
+        this._sum = function(arr) {
+            return arr.reduce((a, b) => a + b, 0);
+        };
+
+        this._mean = function(arr) {
+            return this._sum(arr) / arr.length;
+        };
+
+        this._std = function _std(arr) {
+            const mu = this._mean(arr);
+            const diffArr = arr.map(a => (a - mu) ** 2);
+            return Math.sqrt(this._sum(diffArr) / (arr.length - 1));
+        };
+
+        this._quantile = function(arr, q) {
+            const sorted = this._asc(arr);
+            const pos = (sorted.length - 1) * q;
+            const base = Math.floor(pos);
+            const rest = pos - base;
+            if (sorted[base + 1] !== undefined) {
+                return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+            } else {
+                return sorted[base];
+            }
+        };
+
         return open.apply(this, arguments);
     };
 
@@ -133,7 +163,7 @@
                                           }
                                           break;
                                     case "metrics/getEdgeLinkSeries": 
-                                          items.push(["Timestamp", "Interface", "Metric", "Data"]); 
+                                          items.push(["Timestamp", "Interface", "Metric", "Data", "*Quantile .95","*Median","*Standard deviation","All values with * are computed within the extension and not coming from API"]); 
                                           name = "Transport/Business Priority";
                                           break;
                                     case "metrics/getEdgeAppSeries" : 
@@ -263,13 +293,32 @@
                                                         typeval = type.name;
                                                         break;
                                             }
+                                            
+                                            if (req.method == "metrics/getEdgeLinkSeries") {
+                                                var q95    = this._quantile(dir.data, .95);
+                                                var median = this._quantile(dir.data, .50); 
+                                                var std    = this._std(dir.data);
+                                            }
+                                           
                                             for (const [_ , val] of Object.entries(dir.data)) {
-                                                items.push([
-                                                    timestamp,
-                                                    typeval,
-                                                    dir.metric,
-                                                    val
-                                                ]) 
+                                                if (req.method == "metrics/getEdgeLinkSeries") {
+                                                    items.push([
+                                                        timestamp,
+                                                        typeval,
+                                                        dir.metric,
+                                                        val,
+                                                        q95,
+                                                        median,
+                                                        std
+                                                    ]); 
+                                                } else {
+                                                    items.push([
+                                                        timestamp,
+                                                        typeval,
+                                                        dir.metric,
+                                                        val
+                                                    ]); 
+                                                }
                                                 timestamp += dir.tickInterval;
                                             }
                                         }
