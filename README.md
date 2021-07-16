@@ -23,6 +23,12 @@ As such, please before filling any bugs around UI to VMware support, remove the 
 Depending on the demand, I might program a switch for enable/disable the plugin. 
 
 ## Versions
+* 1.1:
+    * Performance improvement of around 50-60% for collecting and producting the data. 
+    * Seperating "Transport" and "Business Priority" in UI.
+    * Transport tab had two statistics. Now both are supported to be downloadable. Represented via "Transport (Upper)" and "Transport (Lower)" in the UI.
+    * Calculating automatically mean, standard deviation, Quantile .95, Quantile .75, Median, Quantile .25 for "Transport (Upper)" and "Business Pirority" statistics.  
+    * Adding green circle indication at UI when new statistics is there.
 * 1.0:
     * Changed UI to accomodate more data
     * Supporting now "Threat Analytics" and "Traffic Analytics" statistics of CWS.

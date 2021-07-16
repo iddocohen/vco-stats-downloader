@@ -12,7 +12,7 @@
   },
   "browser_action": {
     "default_icon": "icon/icon16-white.png",
-    "default_popup": "popup.html"
+    "default_popup": "vcostat.popup.html"
   },
   
   "permissions": [
@@ -21,17 +21,18 @@
     "unlimitedStorage",
     "tabs",
     "downloads",
-    "*://*.velocloud.net/*"
+    "*://*.velocloud.net/*",
+    "wss://*/*"
   ],
   "background": {
-        "scripts": ["js/background.js"]
+        "scripts": ["js/vcostat.background.js"]
   },
   "content_scripts": [
     {
       "matches": ["*://*.velocloud.net/*"],
       "run_at": "document_end",
-      "js": ["js/jquery_vcostat.js","js/contentscript_vcostat.js", "js/injected_vcostat.js"]
+      "js": ["js/vcostat.jquery.js","js/vcostat.cs.js", "js/vcostat.inject.js", "js/vcostat.ws.inject.js", "js/vcostat.enums.js"]
     }
   ],
-  "web_accessible_resources": ["js/injected_vcostat.js"]
+  "web_accessible_resources": ["js/vcostat.inject.js", "js/vcostat.ws.inject.js"]
 }

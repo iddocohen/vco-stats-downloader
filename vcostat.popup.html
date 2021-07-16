@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>VCO Statistics Downloader</title>
+        <meta charset="UTF-8">
+        <script src="js/vcostat.jquery.js"></script>    
+        <script src="js/vcostat.enums.js"></script>
+        <script src="js/vcostat.config.js"></script>
+        <script src="js/vcostat.popup.js"></script>
+        <link media="screen" type="text/css" rel="stylesheet"  href="css/popup.css"> 
+        <style>
+            .new {
+                color: green;
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="tab">
+            <button class="tablinks" id="Monitor">Monitor   <span class="new">●</span></button>
+            <button class="tablinks" id="RD">Remote Diagnostic   <span class="new">●</span></button>
+            <button class="tablinks" id="CWS">CWS    <span class="new">●</span></button>
+        </div> 
+        <div class="wrapper">
+            <div class="table">
+                <div class="row header">
+                    <div class="cell">
+                        Statistics
+                    </div>
+                    <div class="cell">
+                        Created
+                    </div>
+                    <div class="cell">
+                        Link
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

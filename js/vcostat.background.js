@@ -4,13 +4,13 @@ chrome.tabs.onUpdated.addListener(
               var url = new URL(changeInfo.url);
               if (url.hostname.includes("velocloud.net")){
                     console.log(changeInfo.url);
-                    chrome.tabs.executeScript(tabId, { file: "js/jquery_vcostat.js" }, 
+                    chrome.tabs.executeScript(tabId, { file: "js/vcostat.jquery.js" }, 
                     _=> {
                             let e = chrome.runtime.lastError;
                             if(e !== undefined){
                                 console.log(tabId, _, e);
                             }
-                            chrome.tabs.executeScript(tabId, { file: "js/contentscript_vcostat.js" });
+                            chrome.tabs.executeScript(tabId, { file: "js/vcostat.cs.js" });
                     });
               }
          }
