@@ -50,9 +50,8 @@
                     // responseText is string or null
                     try {
                         // here you get RESPONSE TEXT (BODY), in JSON format, so you can use JSON.parse
-                        var arr = this.responseText;
                         var api = "";
-                        var type = "csv";
+                        const type = "csv";
                         // new API v2 GET requests are used as well for VCO API
                         if (this._method == "GET") {
                             var cws_logs        = /\/api\/cws\/.*\/logs/;
@@ -104,16 +103,17 @@
                                         api = req.method+"/Transport";
                                     }
                                     break;
+                                case "edge/getEdge":
+                                case "configuration/getRoutableApplications":
+                                    type = "db";
+                                    api = req.method;
+                                    break;
                                 case "metrics/getEdgeAppSeries":
                                 case "metrics/getEdgeDeviceSeries":
                                 case "metrics/getEdgeDestSeries":
                                 case "metrics/getEdgeStatusSeries":
                                 case "edge/getEdgeSDWANPeers":
                                 case "linkQualityEvent/getLinkQualityEvents":
-                                case "edge/getEdge":
-                                    type = "db";
-                                case "configuration/getRoutableApplications":
-                                    type = "db";
                                 case "metrics/getEdgeAppMetrics":
                                     api = req.method;
                                     break;
