@@ -52,6 +52,7 @@
                         // here you get RESPONSE TEXT (BODY), in JSON format, so you can use JSON.parse
                         var arr = this.responseText;
                         var api = "";
+                        var type = "csv";
                         // new API v2 GET requests are used as well for VCO API
                         if (this._method == "GET") {
                             var cws_logs        = /\/api\/cws\/.*\/logs/;
@@ -95,32 +96,35 @@
                         // old and new API v2 POST requests are used
                         }else if (this._method == "POST") {
                             req = JSON.parse(this._requestHeaders);
-                            if (req.method == 'metrics/getEdgeLinkSeries'  ||
-                                req.method == 'metrics/getEdgeAppSeries'   ||
-                                req.method == 'metrics/getEdgeDeviceSeries'||
-                                req.method == 'metrics/getEdgeDestSeries'  ||
-                                req.method == 'metrics/getEdgeStatusSeries'||
-                                req.method == 'edge/getEdgeSDWANPeers'     ||
-                                req.method == 'linkQualityEvent/getLinkQualityEvents' ||
-                                req.method == 'edge/getEdge' ||
-                                req.method == 'configuration/getRoutableApplications' ||
-                                req.method == 'metrics/getEdgeAppMetrics'
-                            ){
-                                if (req.method == 'metrics/getEdgeLinkSeries') {
+                            switch (req.method) {
+                                case "metrics/getEdgeLinkSeries":
                                     if (req.params.metrics[0].includes("p1")) {
                                         api = req.method+"/Business";
                                     } else {
                                         api = req.method+"/Transport";
                                     }
-                                } else {
+                                    break;
+                                case "metrics/getEdgeAppSeries":
+                                case "metrics/getEdgeDeviceSeries":
+                                case "metrics/getEdgeDestSeries":
+                                case "metrics/getEdgeStatusSeries":
+                                case "edge/getEdgeSDWANPeers":
+                                case "linkQualityEvent/getLinkQualityEvents":
+                                case "edge/getEdge":
+                                    type = "db";
+                                case "configuration/getRoutableApplications":
+                                    type = "db";
+                                case "metrics/getEdgeAppMetrics":
                                     api = req.method;
-                                }
+                                    break;
+
                             }
                         }
                         // sending it to content script to handle the chrome.local.storage, so popup.js can fetch it.  
                         if (api != ""){
                             window.postMessage(JSON.stringify({
                                 "api" :api,
+                                "type": type,
                                 "resp":this.responseText
                             })); 
                         }

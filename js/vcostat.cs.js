@@ -10,14 +10,14 @@ s.onload = function() {
 (document.head || document.documentElement).appendChild(s);
 
 
-function storeAndsendMessage(type, value) {
+function storeAndsendMessage(api, type, value) {
     // not sure if it is a good idea to solve it this way but here we offset the timezone first before using that
     var tzoffset = (new Date()).getTimezoneOffset() * 60000; //offset in milliseconds
 
     // extracting only the time from current timezone
     var localISOTime = (new Date(Date.now() - tzoffset)).toISOString(); 
     var store = {};
-    store["vcostat:"+type] = JSON.stringify({
+    store["vcostat:"+api] = JSON.stringify({
             "date":localISOTime,
             "resp":value
     });
@@ -26,7 +26,9 @@ function storeAndsendMessage(type, value) {
             console.log("Error Storing: " + chrome.runtime.lastError);
             return 0;
         } 
-        chrome.runtime.sendMessage({download: "new"});
+        if (type != "db") {
+            chrome.runtime.sendMessage({download: "new"});
+        }
     });
     return 1;
 }
@@ -34,7 +36,7 @@ function storeAndsendMessage(type, value) {
 window.addEventListener("message", function(request) {
     try {
         var resp = JSON.parse(request.data);
-        storeAndsendMessage(resp.api, resp.resp);
+        storeAndsendMessage(resp.api, resp.type, resp.resp);
     } catch(err){
         console.log(err);
     }

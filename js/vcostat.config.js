@@ -266,7 +266,6 @@ config ["metrics/getEdgeAppSeries"] = {
             for (const [_, dir] of Object.entries(type.series)) {
                 var timestamp = new Date(dir.startTime).getTime();
                 for (const [_ , val] of Object.entries(dir.data)) {
-                    //items.push([timestamp, config["configuration/getRoutableApplications"].getapp(type.name) || type.name , dir.metric, val]); 
                     items.push([timestamp, enums.Application[type.name] || config["configuration/getRoutableApplications"].getapp(type.name) || type.name, dir.metric, val]); 
                     timestamp += dir.tickInterval;
                 }
