@@ -356,7 +356,7 @@ config ["linkQualityEvent/getLinkQualityEvents"] = {
     css_class: "Monitor",
     name: "QoE",
     type: "csv",
-    csv_header: ["Timestamp", "Interface UUID", "Jitter tx (ms)", "Jitter rx (ms)", "Latency tx (ms)", "Latency rx (ms)", "Packet loss (%) Tx", "Packet loss (%) Rx", "Voice QoE", "Video QoE", "Transactional QoE"],
+    csv_header: ["Timestamp", "Link", "Jitter tx (ms)", "Jitter rx (ms)", "Latency tx (ms)", "Latency rx (ms)", "Packet loss (%) Tx", "Packet loss (%) Rx", "Voice QoE", "Video QoE", "Transactional QoE"],
     csv: function (resp) {
         var items = [];
 
