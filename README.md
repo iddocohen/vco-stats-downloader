@@ -23,6 +23,8 @@ As such, please before filling any bugs around UI to VMware support, remove the 
 Depending on the demand, I might program a switch for enable/disable the plugin. 
 
 ## Versions
+* Not released yet (1.2):
+    * Supporting now App identification which are dynamic.  
 * 1.1:
     * Performance improvement of around 50-60% for collecting and producing the data.
     * Separating "Transport" and "Business Priority" in UI.

@@ -3,7 +3,7 @@
 
   "name": "VCO Statistics Downloader",
   "description": "Download statistics from VMware SD-WAN Orchestrator as CSV",
-  "version": "1.1",
+  "version": "1.2",
 
   "icons": { 
         "16": "icon/icon16-white.png",

@@ -203,6 +203,24 @@ config["metrics/getEdgeAppMetrics"].csv = function (resp) {
 config["metrics/getEdgeLinkSeries/Business"] = Object.assign({}, config["metrics/getEdgeLinkSeries/Transport"]);
 config["metrics/getEdgeLinkSeries/Business"].name = "Business Priority";
 
+config ["configuration/getRoutableApplications"] = {
+    type: "db",
+    resp: {},
+    getapp: function (id) {
+        if (jQuery.isEmptyObject(this.resp)){
+            return false;
+        }
+
+        for (const [_, app] of Object.entries(this.resp.result.applications)){
+            if (app.id == id) {
+                return app.displayName;
+            }
+        }
+        return false;
+    },
+}
+
+
 config ["edge/getEdge"] = {
     type: "db",
     resp: {},
@@ -249,7 +267,7 @@ config ["metrics/getEdgeAppSeries"] = {
                 var timestamp = new Date(dir.startTime).getTime();
                 for (const [_ , val] of Object.entries(dir.data)) {
                     //items.push([timestamp, config["configuration/getRoutableApplications"].getapp(type.name) || type.name , dir.metric, val]); 
-                    items.push([timestamp, enums.Application[type.name] || type.name, dir.metric, val]); 
+                    items.push([timestamp, enums.Application[type.name] || config["configuration/getRoutableApplications"].getapp(type.name) || type.name, dir.metric, val]); 
                     timestamp += dir.tickInterval;
                 }
             }

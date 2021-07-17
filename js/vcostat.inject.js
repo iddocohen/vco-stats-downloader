@@ -103,6 +103,7 @@
                                 req.method == 'edge/getEdgeSDWANPeers'     ||
                                 req.method == 'linkQualityEvent/getLinkQualityEvents' ||
                                 req.method == 'edge/getEdge' ||
+                                req.method == 'configuration/getRoutableApplications' ||
                                 req.method == 'metrics/getEdgeAppMetrics'
                             ){
                                 if (req.method == 'metrics/getEdgeLinkSeries') {
