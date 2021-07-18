@@ -24,6 +24,7 @@ Depending on the demand, I might program a switch for enable/disable the plugin.
 
 ## Versions
 * Not released yet (1.2):
+    * Adding "Capacity Trend line" functionality for Trasnport (Upper) statistics
     * Supporting now App identification which are dynamic.  
 * 1.1:
     * Performance improvement of around 50-60% for collecting and producing the data.
