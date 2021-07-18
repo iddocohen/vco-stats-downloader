@@ -51,7 +51,7 @@
                     try {
                         // here you get RESPONSE TEXT (BODY), in JSON format, so you can use JSON.parse
                         var api = "";
-                        const type = "csv";
+                        var type = "csv";
                         // new API v2 GET requests are used as well for VCO API
                         if (this._method == "GET") {
                             var cws_logs        = /\/api\/cws\/.*\/logs/;

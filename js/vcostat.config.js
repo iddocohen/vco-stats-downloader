@@ -115,12 +115,26 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
             return this._round(sorted[base],1);
         }
     },
-    csv_header: ["Timestamp", "Interface", "Metric", "Data", "*Average", "*Standard Deviation", "*Quantile .95", "*Quantile .75", "*Median (Quantile .50)", "*Quantitle .25", "All values with * are computed within the extension and not coming from API"],
-    csv: function (resp) {
+    regression: true,
+    csv_header: ["Timestamp", "Interface", "Metric", "Data", "*Average", "*Standard Deviation", "*Quantile .95", "*Quantile .75", "*Median (Quantile .50)", "*Quantitle .25", "*Capacity Trendline", "All values with * are computed within the extension and not coming from API"],
+    csv: function (resp, setup) {
         var items = [];
 
         if (this.csv_header){
             items.push(this.csv_header);
+        }
+        
+        var reg = false;
+        var reg_type;
+        var reg_time;
+        if (setup) {
+            var reg_type = setup.find("#reg_type").val();
+            if (reg_type != "none"){
+                var reg_time = setup.find("#reg_time").val();
+                if (reg_time != 0) {
+                    reg = true;
+                }
+            }
         }
 
         for (const [_, type] of Object.entries(resp.result)) {
@@ -132,9 +146,60 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                 var median    = this._quantile(dir.data, .50); 
                 var q25       = this._quantile(dir.data, .25);
                 var timestamp = dir.startTime;
+                if (reg) {
+                    var reg_data = [];
+                    for (const [_ , val] of Object.entries(dir.data)) {
+                          reg_data.push([timestamp, val]);
+                          timestamp += dir.tickInterval;
+                    }
+                    var math;
+                    switch (reg_type) {
+                        case "polynomial_2": 
+                            var math = regression("polynomial", reg_data, 2);
+                            break;
+                        case "linear": 
+                        case "logarithmic": 
+                            var math = regression(reg_type, reg_data);
+                            break;
+                    }
+                }
+                timestamp = dir.startTime;
                 for (const [_ , val] of Object.entries(dir.data)) {
-                    items.push([ timestamp, type.link.interface, dir.metric, val, mean, std, q95, q75, median, q25]); 
+                    var reg_value = null;
+                    if (reg && math) {
+                        switch (reg_type) {
+                            case "polynomial_2":
+                                reg_value = math.equation[2] * Math.pow(timestamp,2) + math.equation[1] * timestamp + math.equation[0];
+                                break;
+                            case "logarithmic":
+                                reg_value = math.equation[0] + math.equation[1] * Math.log(timestamp);
+                                break; 
+                            case "linear":
+                                reg_value = math.equation[0] * timestamp + math.equation[1]; 
+                                break;
+                        } 
+                    }
+                    items.push([ timestamp, type.link.interface, dir.metric, val, mean, std, q95, q75, median, q25, reg_value]); 
                     timestamp += dir.tickInterval;
+                }
+                if (reg && math) {
+                      var result = new Date(timestamp);
+                      var future_date = result.setDate(result.getDate() + parseInt(reg_time));
+                      while (timestamp <= future_date) {
+                            switch (reg_type) {
+                                case "polynomial_2":
+                                    reg_value = math.equation[2] * Math.pow(timestamp,2) + math.equation[1] * timestamp + math.equation[0];
+                                    break;
+                                case "logarithmic":
+                                    reg_value = math.equation[0] + math.equation[1] * Math.log(timestamp);
+                                    break; 
+                                case "linear":
+                                    reg_value = math.equation[0] * timestamp + math.equation[1]; 
+                                    break;
+                            }
+                            items.push([timestamp, type.link.interface, dir.metric,"","","","","","","",reg_value]);
+                            timestamp += dir.tickInterval
+                      } 
                 }
             }
         }
@@ -146,6 +211,7 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
 config["metrics/getEdgeAppMetrics"] = Object.assign({}, config["metrics/getEdgeLinkSeries/Transport"]);
 config["metrics/getEdgeAppMetrics"].name = "Transport (Lower)";
 config["metrics/getEdgeAppMetrics"].csv_header = [];
+config["metrics/getEdgeAppMetrics"].regression = false;
 config["metrics/getEdgeAppMetrics"].csv = function (resp) {
         var items = [];
         var header = [];

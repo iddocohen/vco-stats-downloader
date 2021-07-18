@@ -39,7 +39,19 @@ $(document).on('click','a', function(event) {
             } catch {
                 resp = data.resp;
             }
-            const items    = config[api].csv(resp); 
+
+            var items = [];
+            if (config[api].hasOwnProperty("regression")) {
+                if (config[api].regression){
+                    var setup = link.parent().parent().find('div[data-title="Setup"]');
+                    items = config[api].csv(resp, setup);
+                }else{
+                    items = config[api].csv(resp); 
+                }
+            }else{
+                items = config[api].csv(resp); 
+            }
+
 
             const csv      = items.map(e => e.join(",")).join("\r\n");
             //const filename = config[api].name + '.csv' || 'export.csv';
@@ -65,6 +77,7 @@ $(function () {
             <div class="${value.css_class} row" id="${key}">
                 <div class="cell" data-title="Name">${value.name}</div>
                 <div class="cell" data-title="Created"></div>
+                <div class="cell" data-title="Setup"></div>
                 <div class="cell" data-title="Link"></div>
             </div>
         `; 
@@ -108,6 +121,29 @@ $(function () {
             created.text(date[0]+" "+date[1].replace(/^[^:]*([0-2]\d:[0-5]\d).*$/, "$1"));
  
             link.html(`<a href='#' class='buttonDownload'></a>`);
+
+            if (config[api].hasOwnProperty("regression")) {
+                if (config[api].regression){
+                    var setup = match.find('div[data-title="Setup"]');
+                    setup.html(`
+                         Capacity trendline type:<br>
+                         <select id="reg_type">
+                            <option value="none" default>[None]</option>
+                            <option value="linear">Linear</option>
+                            <option value="logarithmic">Logarithmic</option>
+                            <option value="polynomial_2">Polynomial (2 degree)</option>
+                         </select><br> 
+                         For future:<br> 
+                         <select id="reg_time">
+                            <option value="0" default>[None]</option>
+                            <option value="1">1 Day</option>
+                            <option value="7">1 Week</option>
+                            <option value="14">2 Weeks</option>
+                            <option value="31">4 Weeks</option>
+                         </select>
+                    `); 
+                }
+            } 
 
             chrome.runtime.sendMessage({download: "clear"});
 
