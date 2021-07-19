@@ -131,7 +131,7 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
             var reg_type = setup.find("#reg_type").val();
             if (reg_type != "none"){
                 var reg_time = setup.find("#reg_time").val();
-                if (reg_time != 0) {
+                if (reg_time != "none") {
                     reg = true;
                 }
             }
@@ -139,6 +139,7 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
 
         for (const [_, type] of Object.entries(resp.result)) {
             for (const [_, dir] of Object.entries(type.series)) {
+                //dir.data = dir.data.map(i => this._round(i/ (1000 * 1000), 2));
                 const cp_data = [...dir.data];
                 var mean      = this._round(this._mean(cp_data));
                 var std       = this._round(this._std(cp_data));
@@ -192,7 +193,7 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                 if (reg && math) {
                       var result = new Date(timestamp);
                       var future_date = result.setDate(result.getDate() + parseInt(reg_time));
-                      while (timestamp <= future_date) {
+                      while (timestamp < future_date) {
                             switch (reg_type) {
                                 case "polynomial_3":
                                     reg_value = math.equation[3] * Math.pow(timestamp,3) + math.equation[2] * Math.pow(timestamp,2) + math.equation[1] * timestamp + math.equation[0];

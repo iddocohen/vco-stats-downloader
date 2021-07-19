@@ -160,13 +160,14 @@ $(function () {
                             <option value="linear">Linear</option>
                             <option value="logarithmic">Logarithmic</option>
                          </select><br> 
-                         For future:<br> 
+                         Timeline:<br> 
                          <select id="reg_time">
-                            <option value="0" default>[None]</option>
-                            <option value="1">1 Day</option>
-                            <option value="7">1 Week</option>
-                            <option value="14">2 Weeks</option>
-                            <option value="31">4 Weeks</option>
+                            <option value="none" default>[None]</option>
+                            <option value="0">Now</option>
+                            <option value="1">+1 Day</option>
+                            <option value="7">+1 Week</option>
+                            <option value="14">+2 Weeks</option>
+                            <option value="31">+4 Weeks</option>
                          </select>
                     `); 
                 }
