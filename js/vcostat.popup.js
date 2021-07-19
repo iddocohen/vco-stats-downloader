@@ -155,9 +155,10 @@ $(function () {
                          Capacity trendline type:<br>
                          <select id="reg_type">
                             <option value="none" default>[None]</option>
+                            <option value="polynomial_2">Polynomial (2 degree)</option>
+                            <option value="polynomial_3">Polynomial (3 degree)</option>
                             <option value="linear">Linear</option>
                             <option value="logarithmic">Logarithmic</option>
-                            <option value="polynomial_2">Polynomial (2 degree)</option>
                          </select><br> 
                          For future:<br> 
                          <select id="reg_time">

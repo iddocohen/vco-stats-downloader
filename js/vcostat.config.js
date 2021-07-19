@@ -116,7 +116,7 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
         }
     },
     regression: true,
-    csv_header: ["Timestamp", "Interface", "Metric", "Data", "*Average", "*Standard Deviation", "*Quantile .95", "*Quantile .75", "*Median (Quantile .50)", "*Quantitle .25", "*Capacity Trendline", "All values with * are computed within the extension and not coming from API"],
+    csv_header: ["Timestamp", "Interface", "Metric", "Data", "*Average", "*Standard Deviation", "*Quantile .95", "*Quantile .75", "*Median (Quantile .50)", "*Quantitle .25", "*Capacity Trendline Calculated Value", "*Capacity Trendline R Squared Value (higher value better)","All values with * are computed within the extension and not coming from API"],
     csv: function (setup, resp=this.resp) {
         var items = [];
 
@@ -155,8 +155,10 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                     }
                     var math;
                     switch (reg_type) {
-                        case "polynomial_2": 
-                            var math = regression("polynomial", reg_data, 2);
+                        case "polynomial_3":
+                        case "polynomial_2":
+                            var [str, order] = reg_type.split("_"); 
+                            var math = regression(str, reg_data, parseInt(order));
                             break;
                         case "linear": 
                         case "logarithmic": 
@@ -170,6 +172,9 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                     var reg_value = null;
                     if (reg && math) {
                         switch (reg_type) {
+                            case "polynomial_3":
+                                reg_value = math.equation[3] * Math.pow(timestamp,3) + math.equation[2] * Math.pow(timestamp,2) + math.equation[1] * timestamp + math.equation[0];
+                                break;
                             case "polynomial_2":
                                 reg_value = math.equation[2] * Math.pow(timestamp,2) + math.equation[1] * timestamp + math.equation[0];
                                 break;
@@ -181,7 +186,7 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                                 break;
                         } 
                     }
-                    items.push([ timestamp, type.link.interface, dir.metric, val, mean, std, q95, q75, median, q25, reg_value]); 
+                    items.push([ timestamp, type.link.interface, dir.metric, val, mean, std, q95, q75, median, q25, reg_value, math.r2.toFixed(3)]); 
                     timestamp += dir.tickInterval;
                 }
                 if (reg && math) {
@@ -189,6 +194,9 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                       var future_date = result.setDate(result.getDate() + parseInt(reg_time));
                       while (timestamp <= future_date) {
                             switch (reg_type) {
+                                case "polynomial_3":
+                                    reg_value = math.equation[3] * Math.pow(timestamp,3) + math.equation[2] * Math.pow(timestamp,2) + math.equation[1] * timestamp + math.equation[0];
+                                    break;
                                 case "polynomial_2":
                                     reg_value = math.equation[2] * Math.pow(timestamp,2) + math.equation[1] * timestamp + math.equation[0];
                                     break;
@@ -199,16 +207,18 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                                     reg_value = math.equation[0] * timestamp + math.equation[1]; 
                                     break;
                             }
-                            items.push([timestamp, type.link.interface, dir.metric,"","","","","","","",reg_value]);
+                            items.push([timestamp, type.link.interface, dir.metric,"","","","","","","",reg_value,math.r2.toFixed(3)]);
                             timestamp += dir.tickInterval
                       } 
                 }
             }
         }
+        /*
         if (reg && math) {
             var header = items[0];
             header[header.length - 2] = header[header.length - 2] + " ("+ math.string+") r2="+math.r2.toFixed(3);
         }
+        */
         return items;
     }
 }
