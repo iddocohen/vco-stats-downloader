@@ -17,6 +17,11 @@ function storeAndsendMessage(api, type, value) {
     // extracting only the time from current timezone
     var localISOTime = (new Date(Date.now() - tzoffset)).toISOString(); 
     var store = {};
+    try {
+        value = JSON.parse(value);
+    } catch {
+        value = value;
+    }
     store["vcostat:"+api] = JSON.stringify({
             "date":localISOTime,
             "resp":value
