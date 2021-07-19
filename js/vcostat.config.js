@@ -18,7 +18,7 @@ config["api/cws/logs"] = {
             }
          }
     },
-    csv: function (resp) {
+    csv: function (resp=this.resp) {
         var items = []; 
         var header =  [];
 
@@ -117,13 +117,13 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
     },
     regression: true,
     csv_header: ["Timestamp", "Interface", "Metric", "Data", "*Average", "*Standard Deviation", "*Quantile .95", "*Quantile .75", "*Median (Quantile .50)", "*Quantitle .25", "*Capacity Trendline", "All values with * are computed within the extension and not coming from API"],
-    csv: function (resp, setup) {
+    csv: function (setup, resp=this.resp) {
         var items = [];
 
         if (this.csv_header){
             items.push(this.csv_header);
         }
-        
+
         var reg = false;
         var reg_type;
         var reg_time;
@@ -139,12 +139,13 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
 
         for (const [_, type] of Object.entries(resp.result)) {
             for (const [_, dir] of Object.entries(type.series)) {
-                var mean      = this._round(this._mean(dir.data));
-                var std       = this._round(this._std(dir.data));
-                var q95       = this._quantile(dir.data, .95);
-                var q75       = this._quantile(dir.data, .75);
-                var median    = this._quantile(dir.data, .50); 
-                var q25       = this._quantile(dir.data, .25);
+                const cp_data = [...dir.data];
+                var mean      = this._round(this._mean(cp_data));
+                var std       = this._round(this._std(cp_data));
+                var q95       = this._quantile(cp_data, .95);
+                var q75       = this._quantile(cp_data, .75);
+                var median    = this._quantile(cp_data, .50); 
+                var q25       = this._quantile(cp_data, .25);
                 var timestamp = dir.startTime;
                 if (reg) {
                     var reg_data = [];
@@ -162,6 +163,7 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                             var math = regression(reg_type, reg_data);
                             break;
                     }
+
                 }
                 timestamp = dir.startTime;
                 for (const [_ , val] of Object.entries(dir.data)) {
@@ -203,6 +205,10 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                 }
             }
         }
+        if (reg && math) {
+            var header = items[0];
+            header[header.length - 2] = header[header.length - 2] + " ("+ math.string+") r2="+math.r2.toFixed(3);
+        }
         return items;
     }
 }
@@ -212,7 +218,7 @@ config["metrics/getEdgeAppMetrics"] = Object.assign({}, config["metrics/getEdgeL
 config["metrics/getEdgeAppMetrics"].name = "Transport (Lower)";
 config["metrics/getEdgeAppMetrics"].csv_header = [];
 config["metrics/getEdgeAppMetrics"].regression = false;
-config["metrics/getEdgeAppMetrics"].csv = function (resp) {
+config["metrics/getEdgeAppMetrics"].csv = function (resp=this.resp) {
         var items = [];
         var header = [];
         var sumint = {};
@@ -322,7 +328,7 @@ config ["metrics/getEdgeAppSeries"] = {
     name: "Applications",
     type: "csv",
     csv_header:["Timestamp", "Application ID", "Metric", "Data"],    
-    csv: function (resp) {
+    csv: function (resp=this.resp) {
         var items = [];
 
         if (this.csv_header){
@@ -346,7 +352,7 @@ config ["metrics/getEdgeDestSeries"] = {
     name: "Destinations",
     type: "csv",
     csv_header: ["Timestamp", "Destination", "Metric", "Data"],    
-    csv: function (resp) {
+    csv: function (resp=this.resp) {
         var items = [];
 
         if (this.csv_header){
@@ -374,7 +380,7 @@ config ["metrics/getEdgeStatusSeries"] = {
     name: "Systems",
     type: "csv",
     csv_header: ["Timestamp", "Metric", "Data (5 minute average)"],    
-    csv: function (resp) {
+    csv: function (resp=this.resp) {
         var items = [];
 
         if (this.csv_header){
@@ -399,7 +405,7 @@ config ["edge/getEdgeSDWANPeers"] = {
     name: "Paths",
     type: "csv",
     csv_header: ["Peer Name", "Peer Type", "No. paths in dead", "No. paths in stable", "No. paths in standby", "No. paths in unknown", "No. paths in unstable", "Total Paths", "After Voice QoE", "After Video QoE", "After Trans QoE", "Path QoE"],
-    csv: function (resp) {
+    csv: function (resp=this.resp) {
         var items = [];
 
         if (!resp.result.data) {
@@ -423,7 +429,7 @@ config ["linkQualityEvent/getLinkQualityEvents"] = {
     name: "QoE",
     type: "csv",
     csv_header: ["Timestamp", "Link", "Jitter tx (ms)", "Jitter rx (ms)", "Latency tx (ms)", "Latency rx (ms)", "Packet loss (%) Tx", "Packet loss (%) Rx", "Voice QoE", "Video QoE", "Transactional QoE"],
-    csv: function (resp) {
+    csv: function (resp=this.resp) {
         var items = [];
 
         if (!resp) {
@@ -486,7 +492,7 @@ config ["FLOW_DUMP"] = {
             }
          }
     },
-    csv: function (resp) {
+    csv: function (resp=this.resp) {
         var items = []; 
         if (!resp) {
             return items;
