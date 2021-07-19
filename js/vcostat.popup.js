@@ -23,23 +23,45 @@ $(document).on('click','.tablinks',function(event) {
 });
 
 $(document).on('click','a', function(event) {
-    event.preventDefault();
+//    event.preventDefault();
+//    event.stopPropagation();
     var link = $(this);
     const api  = link.parent().parent().attr('id');
+         
+    var items = [];
+    if (config[api].hasOwnProperty("regression")) {
+        if (config[api].regression){
+            var setup = link.parent().parent().find('div[data-title="Setup"]');
+            items = config[api].csv(setup);
+        }else{
+            items = config[api].csv(); 
+        }
+    }else{
+        items = config[api].csv(); 
+    }
+
+    const csv      = items.map(e => e.join(",")).join("\r\n");
+    const blob     = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url      = URL.createObjectURL(blob);
+    location.href    = url;
+
+    /* 
     chrome.storage.local.get(["vcostat:"+api], function(result){
         if (chrome.runtime.lastError) {
             console.log("Error retrieving index: " + chrome.runtime.lastError);
             return;
         }
-        for (const [_, value] of Object.entries(result)) {
-            const data     = JSON.parse(value);
-            var resp = undefined;
+        for (const [_, uvalue] of Object.entries(result)) {
+            const data     = JSON.parse(uvalue);
+            console.log(data)
+            var resp;
             try {
                 resp = JSON.parse(data.resp);
+                //console.log(resp);
             } catch {
                 resp = data.resp;
             }
-
+            
             var items = [];
             if (config[api].hasOwnProperty("regression")) {
                 if (config[api].regression){
@@ -63,7 +85,8 @@ $(document).on('click','a', function(event) {
             //console.log(link);
             //link.click();
         }
-    }); 
+    });
+    */ 
 });
 
 $(function () {
@@ -97,7 +120,8 @@ $(function () {
             }
 
             const data = JSON.parse(value);
-
+            config[api].resp = data.resp;
+            /*
             if (config[api].type == "db") {
                 var resp = undefined;
                 try {
@@ -108,6 +132,8 @@ $(function () {
                 config[api].resp = resp;
                 continue;
             }
+            */
+
 
             const date = data.date.split("T");
             const match = $("#"+api.replaceAll('/', '\\/'));
