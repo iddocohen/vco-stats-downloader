@@ -117,6 +117,89 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
     },
     regression: true,
     csv_header: ["Timestamp", "Interface", "Metric", "Data", "*Average", "*Standard Deviation", "*Quantile .95", "*Quantile .75", "*Median (Quantile .50)", "*Quantitle .25", "*Capacity Trendline Calculated Value", "*Capacity Trendline R Squared Value (higher value better)","All values with * are computed within the extension and not coming from API"],
+    /* TODO: Build a regression object
+    reg_math: {
+        _reg: null,
+        _poly_getvalue: function (x) {
+            var data = 0;
+            if (!this._reg) {
+                return null;
+            }
+            for (var i=0; i<this._reg.length; i++) {
+                data += this._reg.equation[i] * Math.pow(x, i);
+            }
+            return data;
+        },
+        _linear_getvalue: function (x) {
+            if (!this._reg) {
+                return null;
+            }
+            return (this._reg.equation[0] * x + this._reg.equation[1]);
+        },
+        _log_getvalue: function (x) {
+            if (!this._reg) {
+                return null;
+            }   
+            return (this._reg.equation[0] + this._reg.equation[1] * Math.log(x));
+        },
+        _poly_setdata: function (data, order){
+            this._reg = regression("polynomial", data, order);
+        },
+        _other_setdata: function (str, data){
+            this._reg = regression(str, data);    
+        },
+        _getr2: function () {
+            if (!this._reg) {
+                return null;
+            }
+            return this._reg.r2.toFixed(3); 
+        },
+        "polynomial_3": {
+            setdata: function (data) {
+                .reg_math._poly_setdata(data, 3);
+            },
+            getvalue: function(x) {
+                return reg_math._poly_getvalue(x);  
+            },
+            getr2: function(x) {
+                return reg_math._getr2();  
+            }                  
+        },
+        "polynomial_2": {
+            setdata: function (data) {
+                reg_math._poly_setdata(data, 2);
+            },
+            getvalue: function(x) {
+                return reg_math._poly_getvalue(x);  
+            },
+            getr2: function(x) {
+                return reg_math._getr2();  
+            }                  
+        },
+        "linear": {
+            setdata: function(data) {
+                reg_math._other_setdata("linear", data);
+            },
+            getvalue: function(x) {
+                return reg_math._linear_getvalue(x);
+            },
+            getr2: function() {
+                return reg_math._getr2();  
+            }
+        },
+        "logarithmic": {
+            setdata: function(data) {
+                reg_math._other_setdata("logarithmic", data);
+            },
+            getvalue: function(x) {
+                return reg_math._log_getvalue(x);
+            },
+            getr2: function() {
+                return reg_math._getr2();  
+            }
+        } 
+    },
+    */
     csv: function (setup, resp=this.resp) {
         var items = [];
 
@@ -154,6 +237,7 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                           reg_data.push([timestamp, val]);
                           timestamp += dir.tickInterval;
                     }
+                    //this.reg_math[reg_type].setdata(reg_data);
                     var math;
                     switch (reg_type) {
                         case "polynomial_3":
@@ -166,11 +250,11 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                             var math = regression(reg_type, reg_data);
                             break;
                     }
-
                 }
                 timestamp = dir.startTime;
                 for (const [_ , val] of Object.entries(dir.data)) {
                     var reg_value = null;
+                    //reg_value = this.reg_math[reg_type].getvalue(timestamp);
                     if (reg && math) {
                         switch (reg_type) {
                             case "polynomial_3":
@@ -188,12 +272,14 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                         } 
                     }
                     items.push([ timestamp, type.link.interface, dir.metric, val, mean, std, q95, q75, median, q25, reg_value, math.r2.toFixed(3)]); 
+                    //items.push([ timestamp, type.link.interface, dir.metric, val, mean, std, q95, q75, median, q25, reg_value, this.reg_math[reg_type].getr2()]); 
                     timestamp += dir.tickInterval;
                 }
                 if (reg && math) {
                       var result = new Date(timestamp);
                       var future_date = result.setDate(result.getDate() + parseInt(reg_time));
                       while (timestamp < future_date) {
+                            //reg_value = this.reg_math[reg_type].getvalue(timestamp);
                             switch (reg_type) {
                                 case "polynomial_3":
                                     reg_value = math.equation[3] * Math.pow(timestamp,3) + math.equation[2] * Math.pow(timestamp,2) + math.equation[1] * timestamp + math.equation[0];
@@ -209,6 +295,7 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                                     break;
                             }
                             items.push([timestamp, type.link.interface, dir.metric,"","","","","","","",reg_value,math.r2.toFixed(3)]);
+                            //items.push([timestamp, type.link.interface, dir.metric,"","","","","","","",reg_value, this.reg_math[reg_type].getr2()]);
                             timestamp += dir.tickInterval
                       } 
                 }
