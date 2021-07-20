@@ -23,7 +23,7 @@ As such, please before filling any bugs around UI to VMware support, remove the 
 Depending on the demand, I might program a switch for enable/disable the plugin. 
 
 ## Versions
-* Not released yet (1.2):
+* 1.2:
     * Fixing a bug in Transport (Upper) statistics. Data got sorted which was not intended. 
     * Adding "Capacity Trend line" functionality for Trasnport (Upper) statistics
     * Supporting now App identification which are dynamic.  
