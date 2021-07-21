@@ -1,3 +1,9 @@
+function getDateTime (timestamp) {
+    const dateAndTime = new Date(timestamp).toISOString().split('T')
+    const time = dateAndTime[1].split(':');
+    return dateAndTime[0]+' '+time[0]+':'+time[1];
+}
+
 var config = {};
 
 /* Config CWS */
@@ -116,7 +122,7 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
         }
     },
     regression: true,
-    csv_header: ["Timestamp", "Interface", "Metric", "Data", "*Average", "*Standard Deviation", "*Quantile .95", "*Quantile .75", "*Median (Quantile .50)", "*Quantitle .25", "*Capacity Trendline Calculated Value", "*Capacity Trendline R Squared Value (higher value better)","All values with * are computed within the extension and not coming from API"],
+    csv_header: ["Timestamp (UTC)", "Interface", "Metric", "Data", "*Average", "*Standard Deviation", "*Quantile .95", "*Quantile .75", "*Median (Quantile .50)", "*Quantitle .25", "*Capacity Trendline Calculated Value", "*Capacity Trendline R Squared Value (higher value better)","All values with * are computed within the extension and not coming from API"],
     /* TODO: Build a regression object
     reg_math: {
         _reg: null,
@@ -270,9 +276,12 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                                 reg_value = math.equation[0] * timestamp + math.equation[1]; 
                                 break;
                         } 
+
+                        items.push([ getDateTime(timestamp), type.link.interface, dir.metric, val, mean, std, q95, q75, median, q25, reg_value, math.r2.toFixed(3)]); 
+                    }else{
+                        items.push([ getDateTime(timestamp), type.link.interface, dir.metric, val, mean, std, q95, q75, median, q25, "",""]); 
                     }
-                    items.push([ timestamp, type.link.interface, dir.metric, val, mean, std, q95, q75, median, q25, reg_value, math.r2.toFixed(3)]); 
-                    //items.push([ timestamp, type.link.interface, dir.metric, val, mean, std, q95, q75, median, q25, reg_value, this.reg_math[reg_type].getr2()]); 
+                    // items.push([ timestamp, type.link.interface, dir.metric, val, mean, std, q95, q75, median, q25, reg_value, this.reg_math[reg_type].getr2()]); 
                     timestamp += dir.tickInterval;
                 }
                 if (reg && math) {
@@ -294,8 +303,8 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                                     reg_value = math.equation[0] * timestamp + math.equation[1]; 
                                     break;
                             }
-                            items.push([timestamp, type.link.interface, dir.metric,"","","","","","","",reg_value,math.r2.toFixed(3)]);
-                            //items.push([timestamp, type.link.interface, dir.metric,"","","","","","","",reg_value, this.reg_math[reg_type].getr2()]);
+                            items.push([getDateTime(timestamp), type.link.interface, dir.metric,"","","","","","","",reg_value,math.r2.toFixed(3)]);
+                            //items.push([getDateTime(timestamp), type.link.interface, dir.metric,"","","","","","","",reg_value, this.reg_math[reg_type].getr2()]);
                             timestamp += dir.tickInterval
                       } 
                 }
@@ -436,7 +445,7 @@ config ["metrics/getEdgeAppSeries"] = {
             for (const [_, dir] of Object.entries(type.series)) {
                 var timestamp = new Date(dir.startTime).getTime();
                 for (const [_ , val] of Object.entries(dir.data)) {
-                    items.push([timestamp, enums.Application[type.name] || config["configuration/getRoutableApplications"].getapp(type.name) || type.name, dir.metric, val]); 
+                    items.push([getDateTime(timestamp), enums.Application[type.name] || config["configuration/getRoutableApplications"].getapp(type.name) || type.name, dir.metric, val]); 
                     timestamp += dir.tickInterval;
                 }
             }
@@ -460,7 +469,7 @@ config ["metrics/getEdgeDestSeries"] = {
             for (const [_, dir] of Object.entries(type.series)) {
                 var timestamp = new Date(dir.startTime).getTime();
                 for (const [_ , val] of Object.entries(dir.data)) {
-                    items.push([timestamp, type.name , dir.metric, val]); 
+                    items.push([getDateTime(timestamp), type.name , dir.metric, val]); 
                     timestamp += dir.tickInterval;
                 }
             }
@@ -489,7 +498,7 @@ config ["metrics/getEdgeStatusSeries"] = {
             const timestamp = new Date(arr.startTime).getTime(); 
                 for (const [metric, data] of Object.entries(arr)) {
                     if ( metric != "startTime" && metric != "endTime"){
-                        items.push([timestamp, metric, data]);
+                        items.push([getDateTime(timestamp), metric, data]);
                     }
                 }
         }
@@ -557,7 +566,7 @@ config ["linkQualityEvent/getLinkQualityEvents"] = {
                     tqoe  = data.score[2];
                 }
                 
-                items.push([timestamp, config["edge/getEdge"].getlinkfromuuid(key) || key,jittertx,jitterrx,latencytx,latencyrx,pckttx,pcktrx,aqoe,vqoe,tqoe]); 
+                items.push([getDateTime(timestamp), config["edge/getEdge"].getlinkfromuuid(key) || key,jittertx,jitterrx,latencytx,latencyrx,pckttx,pcktrx,aqoe,vqoe,tqoe]); 
            }
         }
 

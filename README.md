@@ -23,9 +23,12 @@ As such, please before filling any bugs around UI to VMware support, remove the 
 Depending on the demand, I might program a switch for enable/disable the plugin. 
 
 ## Versions
+* Current (not released 1.3):
+    * Fixed bug when "Capacity Trendline" is not selected.
+    * Convert timestamp to readable date.
 * 1.2:
-    * Fixing a bug in Transport (Upper) statistics. Data got sorted which was not intended. 
-    * Adding "Capacity Trend line" functionality for Trasnport (Upper) statistics
+    * Fixed a bug in Transport (Upper) statistics. Data got sorted which was not intended. 
+    * Adding "Capacity Trendline" functionality for "Transport (Upper)" statistics
     * Supporting now App identification which are dynamic.  
 * 1.1:
     * Performance improvement of around 50-60% for collecting and producing the data.
@@ -73,10 +76,10 @@ Different VCO versions could work but not tested.
 
 To load the extension, you need to:
 
-* Clone this repository
-* Go to chrome://extensions/
-* Make sure you are in development mode
-* Click on "Load unpacked extension" and navigate to your extension folder.
+* Clone/Download this repository
+* Enter in the url tab the following address chrome://extensions/
+* Make sure you are in development mode.
+* Click on "Load unpacked extension" and navigate to folder where you downloaded or extracted the repository. 
 
 The extension is configured to only allow .velocloud.net based addresses.
 This can be changed by altering the manifest.json and change it to your URL.
