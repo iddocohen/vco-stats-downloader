@@ -31,7 +31,7 @@
     {
       "matches": ["*://*.velocloud.net/*"],
       "run_at": "document_end",
-      "js": ["js/vcostat.jquery.js","js/vcostat.cs.js", "js/vcostat.inject.js", "js/vcostat.ws.inject.js", "js/vcostat.enums.js", "js/vcostat.reg.js"]
+      "js": ["js/vcostat.jquery.js","js/vcostat.cs.js", "js/vcostat.inject.js", "js/vcostat.ws.inject.js", "js/vcostat.enums.js", "js/vcostat.reg.js", "js/vcostat.draw.js"]
     }
   ],
   "web_accessible_resources": ["js/vcostat.inject.js", "js/vcostat.ws.inject.js"]
