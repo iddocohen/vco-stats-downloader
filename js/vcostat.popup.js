@@ -23,8 +23,8 @@ $(document).on('click','.tablinks',function(event) {
 });
 
 $(document).on('click','a', function(event) {
-//    event.preventDefault();
-//    event.stopPropagation();
+    event.preventDefault();
+    event.stopPropagation();
     var link = $(this);
     const api  = link.parent().parent().attr('id');
          
@@ -43,7 +43,22 @@ $(document).on('click','a', function(event) {
     const csv      = items.map(e => e.join(",")).join("\r\n");
     const blob     = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url      = URL.createObjectURL(blob);
-    location.href    = url;
+    
+    if (link.attr('class') == "capacityDraw") {
+        chrome.tabs.create({
+            "url": "vcostat.draw.html",
+            "active": false
+        }, 
+        function (tab) {
+            chrome.tabs.onUpdated.addListener(function(tabId, info){
+                if (tabId == tab.id && info.status == "complete") {
+                   chrome.tabs.sendMessage(tab.id, {"action": "draw", "items": JSON.stringify(items)});
+                }
+            });
+        });
+    } else {    
+        location.href = url;
+    }
 
     /* 
     chrome.storage.local.get(["vcostat:"+api], function(result){
@@ -101,7 +116,7 @@ $(function () {
                 <div class="cell" data-title="Name">${value.name}</div>
                 <div class="cell" data-title="Created"></div>
                 <div class="cell" data-title="Setup"></div>
-                <div class="cell" data-title="Link"></div>
+                <div class="cell" data-title="Action"></div>
             </div>
         `; 
         $('.row').last().after(div);
@@ -142,11 +157,11 @@ $(function () {
             $(btn_id).find('.new').show();
 
             var created = match.find('div[data-title="Created"]');
-            var link    = match.find('div[data-title="Link"]');
+            var link    = match.find('div[data-title="Action"]');
 
             created.text(date[0]+" "+date[1].replace(/^[^:]*([0-2]\d:[0-5]\d).*$/, "$1"));
  
-            link.html(`<a href='#' class='buttonDownload'></a>`);
+            link.html(`<a href='#' class='buttonDownload' title='Download CSV'></a>`);
 
             if (config[api].hasOwnProperty("regression")) {
                 if (config[api].regression){
@@ -154,22 +169,23 @@ $(function () {
                     setup.html(`
                          Capacity trendline type:<br>
                          <select id="reg_type">
-                            <option value="none" default>[None]</option>
+                            <option value="none">[None]</option>
+                            <option value="polynomial_3" selected="selected">Polynomial (3 degree)</option>
                             <option value="polynomial_2">Polynomial (2 degree)</option>
-                            <option value="polynomial_3">Polynomial (3 degree)</option>
-                            <option value="linear">Linear</option>
                             <option value="logarithmic">Logarithmic</option>
+                            <option value="linear">Linear</option>
                          </select><br> 
                          Timeline:<br> 
                          <select id="reg_time">
-                            <option value="none" default>[None]</option>
+                            <option value="none">[None]</option>
                             <option value="0">Now</option>
                             <option value="1">+1 Day</option>
-                            <option value="7">+1 Week</option>
+                            <option value="7" selected="selected">+1 Week</option>
                             <option value="14">+2 Weeks</option>
                             <option value="31">+4 Weeks</option>
                          </select>
                     `); 
+                    link.append(`<br><br><a href='#' class='capacityDraw'><img src='css/chart.png'/ title='Draw Chart'></a>`);
                 }
             } 
 
