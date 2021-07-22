@@ -23,8 +23,10 @@ As such, please before filling any bugs around UI to VMware support, remove the 
 Depending on the demand, I might program a switch for enable/disable the plugin. 
 
 ## Versions
-* Current (not released 1.3):
+* Current (not released 1.3 and not fully tested):
+    * Adding drawing functionality for "Capacity Trendline".
     * Fixed bug when "Capacity Trendline" is not selected.
+    * Restructure code for "Capacity Trendline".
     * Convert timestamp to readable date.
 * 1.2:
     * Fixed a bug in Transport (Upper) statistics. Data got sorted which was not intended. 
