@@ -6,7 +6,7 @@ body {
   color: #3b3b3b;
   -webkit-font-smoothing: antialiased;
   font-smoothing: antialiased;
-  min-width: 600px;
+  min-width: 800px;
   min-height: 1000px;
   background: #2b2b2b;
 }
