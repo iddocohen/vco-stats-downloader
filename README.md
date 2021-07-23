@@ -23,6 +23,8 @@ As such, please before filling any bugs around UI to VMware support, remove the 
 Depending on the demand, I might program a switch for enable/disable the plugin. 
 
 ## Versions
+* Current not tested (future v1.4):
+    * Removing outliner from "Transport (Upper)" to calculate a betteer trendline. 
 * 1.3:
     * Adding regression functionality and drawing functionality of capacity trendline for "System".
     * Adding drawing functionality of capacity trendline for "Transport" tab.

@@ -274,10 +274,14 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                 var q75       = this._quantile(cp_data, .75);
                 var median    = this._quantile(cp_data, .50); 
                 var q25       = this._quantile(cp_data, .25);
+                const IQR     = q75 - q25;
                 var timestamp = dir.startTime;
                 if (reg) {
                     var reg_data = [];
                     for (const [_ , val] of Object.entries(dir.data)) {
+                          if(val > (q75 + (1.5 * IQR)) || val < (q25 - (1.5 * IQR))) {
+                              continue;
+                          }
                           reg_data.push([timestamp, val]);
                           timestamp += dir.tickInterval;
                     }
