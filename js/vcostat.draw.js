@@ -70,27 +70,12 @@ function createHighcharts(data) {
       {
         categories: data[0],
         labels: {
-          step: 10,
           rotation: -45
         }
       }
     ],
-    yAxis: [
-      {
-        // first yaxis
-        title: {
-          text: "Data"
-        }
-      },
-      {
-        // secondary yaxis
-        title: {
-          text: "Trendline"
-        },
-        min: 0,
-        opposite: true
-      }
-    ],
+    yAxis: {
+    },
     navigator :{
         enabled: true
     },
