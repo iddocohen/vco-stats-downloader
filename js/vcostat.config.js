@@ -4,35 +4,34 @@ function getDateTime (timestamp) {
     return dateAndTime[0]+' '+time[0]+':'+time[1];
 }
 var reg_math = {
-    _reg: null,
-    _poly_getvalue: function (x) {
-        if (!this._reg) {
+    _poly_getvalue: function (x, reg) {
+        if (!reg) {
             return null;
         }
         var data = 0;
-        for (let i=0; i < this._reg.equation.length; i++) {
-            data += this._reg.equation[i] * Math.pow(x, i);
+        for (let i=0; i < reg.equation.length; i++) {
+            data += reg.equation[i] * Math.pow(x, i);
         }
         if (data < 0 ) {
             data = null;
         }
         return data;
     },
-    _linear_getvalue: function (x) {
-        if (!this._reg) {
+    _linear_getvalue: function (x, reg) {
+        if (!reg) {
             return null;
         }
-        var data = this._reg.equation[0] * x + this._reg.equation[1];
+        var data = reg.equation[0] * x + reg.equation[1];
         if (data < 0) {
             data = null;
         }
         return data;
     },
-    _log_getvalue: function (x) {
-        if (!this._reg) {
+    _log_getvalue: function (x, reg) {
+        if (!reg) {
             return null;
         }
-        var data = this._reg.equation[0] + this._reg.equation[1] * Math.log(x);
+        var data = reg.equation[0] + reg.equation[1] * Math.log(x);
         if (data < 0){
             data = null;
         }   
@@ -40,83 +39,89 @@ var reg_math = {
     },
     _poly_setdata: function (data, order){
         try {
-            this._reg = regression("polynomial", data, order);
-            return true;
+            return (regression("polynomial", data, order));
         } catch {
             return false;
         }
     },
     _other_setdata: function (str, data){
         try {
-            this._reg = regression(str, data);    
-            return true;
+            return(regression(str, data));    
         } catch {
             return false;
         }
     },
-    _getr2: function () {
-        if (!this._reg) {
+    _getr2: function (reg) {
+        if (!reg) {
             return null;
         }
-        return Math.round(this._reg.r2*100); 
+        return Math.round(reg.r2*100); 
     }
 };
 
 var reg_option = {};
 reg_option["polynomial_3"] = {
+    _reg: null,
     setdata: function (data) {
-       if (reg_math._poly_setdata(data, 3)) {
+       this._reg = reg_math._poly_setdata(data, 3);
+       if (this._reg) {
             return true;
        }
        return false;
     },
     getvalue: function(x) {
-       return reg_math._poly_getvalue(x);  
+       return reg_math._poly_getvalue(x, this._reg);  
     },
-    getr2: function(x) {
-       return reg_math._getr2();  
+    getr2: function() {
+       return reg_math._getr2(this._reg);  
     }                  
 };
 reg_option["polynomial_2"] = {
+    _reg: null,
     setdata: function (data) {
-        if (reg_math._poly_setdata(data, 2)) {
+        this._reg = reg_math._poly_setdata(data, 2);
+        if (this._reg) {
             return true;
         }
         return false;
     },
     getvalue: function(x) {
-        return reg_math._poly_getvalue(x);  
+        return reg_math._poly_getvalue(x, this._reg);  
     },
-    getr2: function(x) {
-        return reg_math._getr2();  
+    getr2: function() {
+        return reg_math._getr2(this._reg);  
     }
 };                  
 reg_option["linear"] = {
+    _reg: null,
     setdata: function(data) {
-        if(reg_math._other_setdata("linear", data)) {
+        this._reg = reg_math._other_setdata("linear", data);
+        if(this._reg) {
             return true;
         }
         return false;
     },
     getvalue: function(x) {
-        return reg_math._linear_getvalue(x);
+        return reg_math._linear_getvalue(x, this._reg);
     },
     getr2: function() {
-        return reg_math._getr2();  
+        return reg_math._getr2(this._reg);  
     }
 };
 reg_option["logarithmic"] = {
+    _reg: null,
     setdata: function(data) {
-        if (reg_math._other_setdata("logarithmic", data)) {
+        this._reg = reg_math._other_setdata("logarithmic", data);
+        if(this._reg) {
             return true;
         }
         return false;
     },
     getvalue: function(x) {
-        return reg_math._log_getvalue(x);
+        return reg_math._log_getvalue(x, this._reg);
     },
     getr2: function() {
-        return reg_math._getr2();  
+        return reg_math._getr2(this._reg);  
     }
 }; 
 
@@ -470,21 +475,59 @@ config ["metrics/getEdgeStatusSeries"] = {
     css_class: "Monitor",
     name: "Systems",
     type: "csv",
-    csv_header: ["Timestamp", "Metric", "Data (5 minute average)"],    
-    csv: function (resp=this.resp) {
+    csv_header: ["Timestamp", "Metric", "Data (5 minute average)", "*Capacity Trendline", "*Success in Calculating Trendline", "All values with * are computed within the extension and not coming from API"],    
+    regression: true,
+    csv: function (setup, resp=this.resp) {
         var items = [];
 
         if (this.csv_header){
             items.push(this.csv_header);
         }
 
-        for (const [_, arr] of Object.entries(resp.result.series)) {
-            const timestamp = new Date(arr.startTime).getTime(); 
+        var reg = false;
+        var reg_type;
+        var reg_time;
+        if (setup) {
+            var reg_type = setup.find("#reg_type").val();
+            if (reg_type != "none"){
+                var reg_time = setup.find("#reg_time").val();
+                if (reg_time != "none") {
+                    reg = true;
+                }
+            }
+        }
+
+         if (reg) {
+            var systems = {};
+            for (const [_, arr] of Object.entries(resp.result.series)) {
+                var timestamp = new Date(arr.startTime).getTime(); 
                 for (const [metric, data] of Object.entries(arr)) {
                     if ( metric != "startTime" && metric != "endTime"){
+                        if (!systems.hasOwnProperty(metric)) {
+                            systems[metric] = [];
+                        }
+                        systems[metric].push([timestamp, data]);
+                    }
+                }
+            }
+            var systems_reg = {};
+            for (metric in systems) {
+                systems_reg[metric] = Object.assign({},reg_option[reg_type]);
+                systems_reg[metric].setdata(systems[metric]);
+            }
+        }
+
+        for (const [_, arr] of Object.entries(resp.result.series)) {
+            var timestamp = new Date(arr.startTime).getTime(); 
+            for (const [metric, data] of Object.entries(arr)) {
+                if (metric != "startTime" && metric != "endTime"){
+                    if (reg) {
+                        items.push([getDateTime(timestamp), metric, data, systems_reg[metric].getvalue(timestamp), systems_reg[metric].getr2()]);    
+                    } else { 
                         items.push([getDateTime(timestamp), metric, data]);
                     }
                 }
+            }
         }
 
         return items;
