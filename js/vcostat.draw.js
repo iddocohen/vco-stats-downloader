@@ -1,3 +1,5 @@
+var title = "";
+
 function itemsToHtml (allRows) {
     var table = '<table id="dt-table">';
     allRows[0].pop();
@@ -43,7 +45,12 @@ function getTableData(table) {
   table.rows({ search: "applied" }).every(function() {
     const data = this.data();
     timeArr.push(data[0]);
-    dataArr.push(parseFloat(data[3]));
+    // TODO: Hack and need to be done via config not via title
+    if (title == "Systems") {
+        dataArr.push(parseFloat(data[2]));
+    } else {
+        dataArr.push(parseFloat(data[3]));
+    }
     trendArr.push(parseFloat(data[data.length-2]));
   });
 
@@ -61,10 +68,7 @@ function createHighcharts(data) {
  
   Highcharts.chart("chart", {
     title: {
-      text: "Capacity Trendline"
-    },
-    subtitle: {
-      text: "Tx/Rx vs Calculated Trend"
+      text: title+" - Capacity Trendline"
     },
     xAxis: [
       {
@@ -88,13 +92,14 @@ function createHighcharts(data) {
     },
     tooltip: {
         formatter: function() {
-            if (this.y > 1000000000) {
+            // TODO: Hack as well. Maybe new HighChart needed per type?
+            if (title != "Systems" && this.y > 1000000000) {
                 return Highcharts.numberFormat(this.y / 1000000000, 2) + " GBytes"
-            }else if (this.y > 1000000) {
+            }else if (title != "Systems" && this.y > 1000000) {
                 return Highcharts.numberFormat(this.y / 1000000, 2) + " MBytes"
-            } else if (this.y > 1000) {
+            } else if (title != "Systems" && this.y > 1000) {
                 return Highcharts.numberFormat(this.y / 1000, 2) + " KBytes";
-            } else if (this.y <= 0) {
+            } else if (title != "Systems" && this.y <= 0) {
                 return "0 Bytes";
             } else {
                 return this.y
@@ -158,6 +163,7 @@ $(function () {
         if (request.action != "draw"){
            return true;
         }
+        title = request.title;        
         const items = JSON.parse(request.items);
         html = itemsToHtml(items);
 
