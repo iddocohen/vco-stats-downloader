@@ -14,7 +14,7 @@ var reg_math = {
             data += this._reg.equation[i] * Math.pow(x, i);
         }
         if (data < 0 ) {
-            data = 0;
+            data = null;
         }
         return data;
     },
@@ -24,7 +24,7 @@ var reg_math = {
         }
         var data = this._reg.equation[0] * x + this._reg.equation[1];
         if (data < 0) {
-            data = 0
+            data = null;
         }
         return data;
     },
@@ -34,7 +34,7 @@ var reg_math = {
         }
         var data = this._reg.equation[0] + this._reg.equation[1] * Math.log(x);
         if (data < 0){
-            data = 0;
+            data = null;
         }   
         return data;
     },
@@ -58,7 +58,7 @@ var reg_math = {
         if (!this._reg) {
             return null;
         }
-        return this._reg.r2; 
+        return Math.round(this._reg.r2*100); 
     }
 };
 
@@ -238,7 +238,7 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
         }
     },
     regression: true,
-    csv_header: ["Timestamp (UTC)", "Name", "Metric", "Data", "*Average", "*Standard Deviation", "*Quantile .95", "*Quantile .75", "*Median (Quantile .50)", "*Quantitle .25", "*Capacity Trendline Calculated Value", "*Capacity Trendline R Squared Value (higher value better)","All values with * are computed within the extension and not coming from API"],
+    csv_header: ["Timestamp (UTC)", "Name", "Metric", "Data", "*Average", "*Standard Deviation", "*Quantile .95", "*Quantile .75", "*Median (Quantile .50)", "*Quantitle .25", "*Capacity Trendline Calculated Value", "*Success in Calculating Trendline (%)","All values with * are computed within the extension and not coming from API"],
     csv: function (setup, resp=this.resp) {
         var items = [];
 
