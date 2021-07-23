@@ -52,7 +52,7 @@ $(document).on('click','a', function(event) {
         function (tab) {
             chrome.tabs.onUpdated.addListener(function(tabId, info){
                 if (tabId == tab.id && info.status == "complete") {
-                   chrome.tabs.sendMessage(tab.id, {"action": "draw", "items": JSON.stringify(items)});
+                   chrome.tabs.sendMessage(tab.id, {"action": "draw", "title":config[api].name, "items": JSON.stringify(items)});
                 }
             });
         });
@@ -178,9 +178,9 @@ $(function () {
                          Timeline:<br> 
                          <select id="reg_time">
                             <option value="none">[None]</option>
-                            <option value="0">Now</option>
+                            <option value="0" selected="selected">Now</option>
                             <option value="1">+1 Day</option>
-                            <option value="7" selected="selected">+1 Week</option>
+                            <option value="7">+1 Week</option>
                             <option value="14">+2 Weeks</option>
                             <option value="31">+4 Weeks</option>
                          </select>
