@@ -3,6 +3,21 @@ function getDateTime (timestamp) {
     const time = dateAndTime[1].split(':');
     return dateAndTime[0]+' '+time[0]+':'+time[1];
 }
+function clone (obj) {
+    var clone = {};
+    for (let k in obj){
+        if (obj.hasOwnProperty(k)) {
+            clone[k] = obj[k];
+        } 
+    }
+    return clone;
+}
+
+function round(number, precision) {
+    const multiplier = Math.pow(10, precision || 0);
+    return Math.round(number * multiplier) / multiplier;
+}
+
 var reg_math = {
     _poly_getvalue: function (x, reg) {
         if (!reg) {
@@ -12,9 +27,6 @@ var reg_math = {
         for (let i=0; i < reg.equation.length; i++) {
             data += reg.equation[i] * Math.pow(x, i);
         }
-        if (data < 0 ) {
-            data = null;
-        }
         return data;
     },
     _linear_getvalue: function (x, reg) {
@@ -22,9 +34,6 @@ var reg_math = {
             return null;
         }
         var data = reg.equation[0] * x + reg.equation[1];
-        if (data < 0) {
-            data = null;
-        }
         return data;
     },
     _log_getvalue: function (x, reg) {
@@ -32,21 +41,19 @@ var reg_math = {
             return null;
         }
         var data = reg.equation[0] + reg.equation[1] * Math.log(x);
-        if (data < 0){
-            data = null;
-        }   
         return data;
     },
     _poly_setdata: function (data, order){
         try {
             return (regression("polynomial", data, order));
-        } catch {
+        } catch (e){
+            console.log(e);
             return false;
         }
     },
     _other_setdata: function (str, data){
         try {
-            return(regression(str, data));    
+            return(regression(str,data));    
         } catch {
             return false;
         }
@@ -55,7 +62,19 @@ var reg_math = {
         if (!reg) {
             return null;
         }
-        return Math.round(reg.r2*100); 
+        let val = reg.r2;
+        if (isNaN(val)) {
+            val = 100;
+        } else {
+            val = round(parseFloat(val)*100);
+        }
+        return ((val) ? val : 0); 
+    },
+    _geteq: function(reg) {
+        if (!reg) {
+            return "";
+        }
+        return reg.string;
     }
 };
 
@@ -74,7 +93,11 @@ reg_option["polynomial_3"] = {
     },
     getr2: function() {
        return reg_math._getr2(this._reg);  
+    },
+    geteq: function () {
+       return reg_math._geteq(this._reg);
     }                  
+    
 };
 reg_option["polynomial_2"] = {
     _reg: null,
@@ -90,7 +113,10 @@ reg_option["polynomial_2"] = {
     },
     getr2: function() {
         return reg_math._getr2(this._reg);  
-    }
+    },
+    geteq: function () {
+       return reg_math._geteq(this._reg);
+    }                  
 };                  
 reg_option["linear"] = {
     _reg: null,
@@ -106,7 +132,10 @@ reg_option["linear"] = {
     },
     getr2: function() {
         return reg_math._getr2(this._reg);  
-    }
+    },
+    geteq: function () {
+       return reg_math._geteq(this._reg);
+    }                  
 };
 reg_option["logarithmic"] = {
     _reg: null,
@@ -122,8 +151,48 @@ reg_option["logarithmic"] = {
     },
     getr2: function() {
         return reg_math._getr2(this._reg);  
-    }
-}; 
+    },
+    geteq: function () {
+       return reg_math._geteq(this._reg);
+    }                  
+};
+reg_option["best"] = {
+    _name: "",
+    _data: [],
+    setdata: function (data) {
+        let r2 = -1;
+        for (const [k, _] of Object.entries(reg_option)) {
+            if (k === "best") {
+                continue;
+            }
+            if (r2 == 100) {
+                continue;
+            }
+            if (reg_option[k].setdata(data)) {
+                let t = reg_option[k].getr2();      
+                if (t > r2 || t == 100) {
+                    this._name = k;
+                    this._data = data;
+                    r2 = t;
+                    
+                }
+            }else {
+                console.log("Fuck");
+            }
+        }     
+    }, 
+    getvalue: function(x) {
+        reg_option[this._name].setdata(this._data);
+        return reg_option[this._name].getvalue(x);
+    },
+    getr2: function () {
+        return reg_option[this._name].getr2();
+    },
+    geteq: function () {
+        return reg_option[this._name].geteq();
+    }                  
+}
+ 
 
 var config = {};
 
@@ -243,7 +312,7 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
         }
     },
     regression: true,
-    csv_header: ["Timestamp (UTC)", "Name", "Metric", "Data", "*Average", "*Standard Deviation", "*Quantile .95", "*Quantile .75", "*Median (Quantile .50)", "*Quantitle .25", "*Capacity Trendline Calculated Value", "*Success in Calculating Trendline (%)","All values with * are computed within the extension and not coming from API"],
+    csv_header: ["Timestamp (UTC)", "Name", "Metric", "Data", "*Average", "*Standard Deviation", "*Quantile .95", "*Quantile .75", "*Median (Quantile .50)", "*Quantitle .25", "*Capacity Trendline Calculated Value", "*Success in Calculating Trendline (%)", "All values with * are computed within the extension and not coming from API"],
     csv: function (setup, resp=this.resp) {
         var items = [];
 
@@ -264,12 +333,49 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
             }
         }
 
+        let pointStart = 0;
+        let pointInterval = 0; 
         for (const [_, type] of Object.entries(resp.result)) {
-            for (const [_, dir] of Object.entries(type.series)) {
-                //dir.data = dir.data.map(i => this._round(i/ (1000 * 1000), 2));
+            let bpsRx = [];
+            let bpsTx = [];
+            for (let i = type.series.length; i--;) {
+                if (type.series[i].metric === "bpsOfBestPathTx"){
+                    bpsTx = [...type.series[i].data];
+                    type.series.splice(i, 1);
+                }
+            }
+            for (let i = type.series.length; i--;) {
+                if (type.series[i].metric === "bpsOfBestPathRx"){
+                    bpsRx = [...type.series[i].data];
+                    type.series.splice(i, 1);
+                }
+            }
+            // API returns several bytesRx as this is getting requested by the UI. Not sure why the UI asks for it. Hence deleting one and only when bpsOfBestPathRx is set.
+            if (bpsRx.length > 0){
+                let foundRx = null;
+                for (let i=0; i < type.series.length; i++) {
+                    if (type.series[i].metric === "bytesRx"){
+                        foundRx = i;
+                    }
+                }
+                if (foundRx) {
+                    type.series.splice(foundRx,1);
+                }
+            }
+            
+            for (let j = 0; j < type.series.length; j++) {
+                let dir = type.series[j];
+                if (j == 0) {
+                    pointStart = dir.startTime;
+                    pointInterval = dir.tickInterval;
+                }
+                if (bpsRx.length > 0 || bpsTx.length > 0) {
+                    dir.data = dir.data.map(x => ((x*8*1000)/dir.tickInterval));
+                    dir.metric = dir.metric.replace("bytes", "bitsPerSecond");
+                }
                 const cp_data = [...dir.data];
-                var mean      = this._round(this._mean(cp_data));
-                var std       = this._round(this._std(cp_data));
+                var mean      = round(this._mean(cp_data));
+                var std       = round(this._std(cp_data));
                 var q95       = this._quantile(cp_data, .95);
                 var q75       = this._quantile(cp_data, .75);
                 var median    = this._quantile(cp_data, .50); 
@@ -278,7 +384,8 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                 var timestamp = dir.startTime;
                 if (reg) {
                     var reg_data = [];
-                    for (const [_ , val] of Object.entries(dir.data)) {
+                    for (let i = 0; i < dir.data.length; i++){
+                          var val = dir.data[i];
                           if(val > (q75 + (1.5 * IQR)) || val < (q25 - (1.5 * IQR))) {
                               continue;
                           }
@@ -288,7 +395,8 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                     reg_option[reg_type].setdata(reg_data);
                 }
                 timestamp = dir.startTime;
-                for (const [_ , val] of Object.entries(dir.data)) {
+                for (let i = 0; i < dir.data.length; i++){
+                    var val = dir.data[i];
                     var reg_value = null;
                     if (reg){
                        reg_value = reg_option[reg_type].getvalue(timestamp);
@@ -309,7 +417,7 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                 }
             }
         }
-        return items;
+        return [pointStart, pointInterval, items];
     }
 }
 
@@ -516,25 +624,42 @@ config ["metrics/getEdgeStatusSeries"] = {
             }
             var systems_reg = {};
             for (metric in systems) {
-                systems_reg[metric] = Object.assign({},reg_option[reg_type]);
+                //systems_reg[metric] = Object.assign({},reg_option[reg_type]);
+                //systems_reg[metric] = JSON.parse(JSON.stringify(reg_option[reg_type]));
+                //systems_reg[metric] = clone(reg_option[reg_type]);
+                //systems_reg[metric] = clone(reg_option[reg_type]);
+                systems_reg[metric] = {};
+                for (let k in reg_option[reg_type]){
+                    if (reg_option[reg_type].hasOwnProperty(k)) {
+                        systems_reg[metric][k] = reg_option[reg_type][k];
+                    } 
+                }
                 systems_reg[metric].setdata(systems[metric]);
             }
         }
-
-        for (const [_, arr] of Object.entries(resp.result.series)) {
-            var timestamp = new Date(arr.startTime).getTime(); 
+        let pointStart = 0;
+        let pointInterval = 0;
+        for (let i = 0; i < resp.result.series.length; i++ ) {
+            let arr = resp.result.series[i];
+            let timestamp = new Date(arr.startTime).getTime(); 
+            if (i == 0) {
+                pointStart = timestamp; 
+            }
+            if (i == 1) {
+                pointInterval = timestamp - pointStart;
+            }
             for (const [metric, data] of Object.entries(arr)) {
                 if (metric != "startTime" && metric != "endTime"){
                     if (reg) {
                         items.push([getDateTime(timestamp), metric, data, systems_reg[metric].getvalue(timestamp), systems_reg[metric].getr2()]);    
                     } else { 
-                        items.push([getDateTime(timestamp), metric, data]);
+                        items.push([getDateTime(timestamp), metric, data, "", ""]);
                     }
                 }
             }
         }
 
-        return items;
+        return [pointStart, pointInterval, items];
     }
 }
 

@@ -29,10 +29,12 @@ $(document).on('click','a', function(event) {
     const api  = link.parent().parent().attr('id');
          
     var items = [];
+    let pointStart = 0;
+    let pointInterval = 0;
     if (config[api].hasOwnProperty("regression")) {
         if (config[api].regression){
             var setup = link.parent().parent().find('div[data-title="Setup"]');
-            items = config[api].csv(setup);
+            [pointStart, pointInterval, items] = config[api].csv(setup);
         }else{
             items = config[api].csv(); 
         }
@@ -52,7 +54,7 @@ $(document).on('click','a', function(event) {
         function (tab) {
             chrome.tabs.onUpdated.addListener(function(tabId, info){
                 if (tabId == tab.id && info.status == "complete") {
-                   chrome.tabs.sendMessage(tab.id, {"action": "draw", "title":config[api].name, "items": JSON.stringify(items)});
+                   chrome.tabs.sendMessage(tab.id, {"action": "draw", "title":config[api].name, "pointStart": pointStart, "pointInterval": pointInterval, "items": JSON.stringify(items)});
                 }
             });
         });
@@ -170,7 +172,8 @@ $(function () {
                          Capacity trendline type:<br>
                          <select id="reg_type">
                             <option value="none">[None]</option>
-                            <option value="polynomial_3" selected="selected">Polynomial (3 degree)</option>
+                            <option value="best" selected="selected">Find best option </option>
+                            <option value="polynomial_3">Polynomial (3 degree)</option>
                             <option value="polynomial_2">Polynomial (2 degree)</option>
                             <option value="logarithmic">Logarithmic</option>
                             <option value="linear">Linear</option>

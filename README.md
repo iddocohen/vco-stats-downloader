@@ -24,7 +24,11 @@ Depending on the demand, I might program a switch for enable/disable the plugin.
 
 ## Versions
 * Current not tested (future v1.4):
-    * Removing outliner from "Transport (Upper)" to calculate a betteer trendline. 
+    * Added "Find best option" functionality for Capacity trendlining. 
+    * Altered drawing graph to support better data handling.
+    * "bitsPerSecond" will be computed now when "Average Throughput" is selected in the UI for Transport.
+    * Removing outliner from "Transport (Upper)" to calculate a better trendline. 
+    * Removing some stats from "Transpor (Upper)" statistics that are unrelated to calculations (to increase performance). 
 * 1.3:
     * Adding regression functionality and drawing functionality of capacity trendline for "System".
     * Adding drawing functionality of capacity trendline for "Transport" tab.

@@ -1,4 +1,6 @@
 var title = "";
+let pointStart = 0;
+let pointInterval = 0;
 
 function itemsToHtml (allRows) {
     var table = '<table id="dt-table">';
@@ -36,6 +38,16 @@ function itemsToHtml (allRows) {
     return table;
 }
 
+function bytes(bytes, label) {
+    if (bytes == 0) return '';
+    var s = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
+    var e = Math.floor(Math.log(bytes)/Math.log(1000));
+    var value = ((bytes/Math.pow(1000, Math.floor(e))).toFixed(2));
+    e = (e<0) ? (-e) : e;
+    if (label) value += ' ' + s[e];
+    return value;
+}
+
 function getTableData(table) {
   const dataArray = [],
         timeArr = [],
@@ -43,7 +55,12 @@ function getTableData(table) {
         trendArr = [];
 
   table.rows({ search: "applied" }).every(function() {
-    const data = this.data();
+    let data = this.data();
+    let tmp = data[0].split(" ");
+    let date = tmp[0].split("-");
+    let time = tmp[1].split(":");
+    let datetime = new Date(date[0], date[1]-1, date[0], time[0], time[1]).getTime();
+
     timeArr.push(data[0]);
     // TODO: Hack and need to be done via config not via title
     if (title == "Systems") {
@@ -59,7 +76,120 @@ function getTableData(table) {
   return dataArray;
 }
 
+function createHighcharts2(data) {
+  var start = +new Date();
+  Highcharts.chart("chart", {
+     chart: {
+            events: {
+                load: function () {
+                    if (!window.TestController) {
+                        this.setTitle(null, {
+                            text: 'Built chart in ' + (new Date() - start) + 'ms'
+                        });
+                    }
+                }
+            },
+            zoomType: 'x'
+    },
+    title: {
+      text: title+" - Capacity Trendline"
+    },
+    rangeSelector: {
+        enabled: true,
+        buttons: [{
+            type: 'day',
+            count: 3,
+            text: '3d'
+        }, {
+            type: 'week',
+            count: 1,
+            text: '1w'
+        }, {
+            type: 'month',
+            count: 1,
+            text: '1m'
+        }, {
+            type: 'month',
+            count: 6,
+            text: '6m'
+        }, {
+            type: 'year',
+            count: 1,
+            text: '1y'
+        }, {
+            type: 'all',
+            text: 'All'
+        }],
+        selected: 1
+    },
+
+    navigator :{
+        enabled: true
+    },
+
+    scrollbar :{
+        enabled: true
+    },
+    xAxis: {
+        type:'datetime'
+
+    },
+    yAxis: {
+        title: {
+            text: 'Metric'
+        },
+        labels: {
+            formatter: function () {
+                /* TODO: Hack again...*/
+                if (title !== "Systems") {
+                    return bytes(this.value, true);
+                } else {
+                    return this.value;
+                }
+            }
+        }
+    },
+
+    subtitle: {
+        text: 'Built chart in ...', // dummy text to reserve space for dynamic subtitle
+    },
+
+    tooltip: {
+        formatter: function() {
+            /* TODO: Hack again...*/
+            if (title !== "Systems") {
+                return bytes(this.y, true);
+            } else {
+                return this.y;
+            }
+        }
+    },
+    series: [
+    {
+        name: '',
+        data: data[1],
+        pointStart: pointStart,
+        pointInterval: pointInterval,
+        tooltip: {
+            valueDecimals: 0,
+        }
+    },
+    {
+        name: '',
+        data: data[2],
+        pointStart: pointStart,
+        pointInterval: pointInterval,
+        tooltip: {
+            valueDecimals: 0,
+        }
+    }]
+  });  
+} 
+
+
 function createHighcharts(data) {
+  var start = +new Date();
+
   Highcharts.setOptions({
     //lang: {
     //  thousandsSep: ","
@@ -67,19 +197,84 @@ function createHighcharts(data) {
   });
  
   Highcharts.chart("chart", {
+     chart: {
+            events: {
+                load: function () {
+                    if (!window.TestController) {
+                        this.setTitle(null, {
+                            text: 'Built chart in ' + (new Date() - start) + 'ms'
+                        });
+                    }
+                }
+            },
+            zoomType: 'x'
+    },
     title: {
       text: title+" - Capacity Trendline"
     },
-    xAxis: [
-      {
+    xAxis:
+    [{
         categories: data[0],
         labels: {
           rotation: -45
         }
       }
     ],
-    yAxis: {
+    /*
+      {
+        type: 'datetime',
+        tickPositions: data[0],
+        labels: {
+            formatter: function() {
+                 return Highcharts.dateFormat('%m/%d/%y', this.value);
+            },
+            rotation: -45
+        }
     },
+  plotOptions: {
+    series: {
+      pointStart: data[0][0],
+      pointInterval: 1000 * 60 * 60 * 24
+    }
+  },
+    */
+    yAxis: [
+      {
+        // first yaxis
+        title: {
+          text: "Metric data"
+        },
+        labels: {
+            formatter: function () {
+                /* TODO: Hack again...*/
+                if (title !== "Systems") {
+                    return bytes(this.value, true);
+                } else {
+                    return this.value;
+                }
+            }
+        },
+        min: 0
+      },
+      {
+        // secondary yaxis
+        title: {
+          text: "Trend line data"
+        },
+        labels: {
+            formatter: function () {
+                /* TODO: Hack again...*/
+                if (title !== "Systems") {
+                    return bytes(this.value, true);
+                } else {
+                    return this.value;
+                }
+            }
+        },
+        min: 0,
+        opposite: true
+      }
+    ],
     navigator :{
         enabled: true
     },
@@ -92,18 +287,26 @@ function createHighcharts(data) {
     },
     tooltip: {
         formatter: function() {
+            /* TODO: Hack again...*/
+            if (title !== "Systems") {
+                return bytes(this.y, true);
+            } else {
+                return this.y;
+            }
             // TODO: Hack as well. Maybe new HighChart needed per type?
+            /*
             if (title != "Systems" && this.y > 1000000000) {
                 return Highcharts.numberFormat(this.y / 1000000000, 2) + " GBytes"
             }else if (title != "Systems" && this.y > 1000000) {
                 return Highcharts.numberFormat(this.y / 1000000, 2) + " MBytes"
             } else if (title != "Systems" && this.y > 1000) {
                 return Highcharts.numberFormat(this.y / 1000, 2) + " KBytes";
-            } else if (title != "Systems" && this.y <= 0) {
+            } else if (title != "Systems" && this.y == 0) {
                 return "0 Bytes";
             } else {
                 return this.y
             }
+            */
         }
     },
     series: [
@@ -147,12 +350,12 @@ function setTableEvents(table) {
   });
 
   // listen for updates and adjust the chart accordingly
-  table.on("draw", () => {
+  table.on("keyup change draw", () => {
     if (draw) {
       draw = false;
     } else {
       const tableData = getTableData(table);
-      createHighcharts(tableData);
+      createHighcharts2(tableData);
     }
   });
 }
@@ -164,6 +367,8 @@ $(function () {
            return true;
         }
         title = request.title;        
+        pointStart = request.pointStart;
+        pointInterval = request.pointInterval;
         const items = JSON.parse(request.items);
         html = itemsToHtml(items);
 
@@ -186,7 +391,7 @@ $(function () {
             fixedHeader: true
         });
         const tableData = getTableData(table);
-        createHighcharts(tableData);
+        createHighcharts2(tableData);
         setTableEvents(table);
     });
 });
