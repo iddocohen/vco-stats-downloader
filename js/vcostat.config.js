@@ -1,5 +1,8 @@
 function getDateTime (timestamp) {
-    const dateAndTime = new Date(timestamp).toISOString().split('T')
+    // Server return UTC, converting it to local timezone like in VCO.
+    // Reference: https://stackoverflow.com/questions/10830357/javascript-toisostring-ignores-timezone-offset
+    const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+    const dateAndTime = new Date(timestamp-tzoffset).toISOString().split('T')
     const time = dateAndTime[1].split(':');
     return dateAndTime[0]+' '+time[0]+':'+time[1];
 }
@@ -27,27 +30,26 @@ var reg_math = {
         for (let i=0; i < reg.equation.length; i++) {
             data += reg.equation[i] * Math.pow(x, i);
         }
-        return data;
+        return round(data,2);
     },
     _linear_getvalue: function (x, reg) {
         if (!reg) {
             return null;
         }
         var data = reg.equation[0] * x + reg.equation[1];
-        return data;
+        return round(data,2);
     },
     _log_getvalue: function (x, reg) {
         if (!reg) {
             return null;
         }
         var data = reg.equation[0] + reg.equation[1] * Math.log(x);
-        return data;
+        return round(data,2);
     },
     _poly_setdata: function (data, order){
         try {
             return (regression("polynomial", data, order));
         } catch (e){
-            console.log(e);
             return false;
         }
     },
@@ -156,6 +158,9 @@ reg_option["logarithmic"] = {
        return reg_math._geteq(this._reg);
     }                  
 };
+
+//TODO: So inefficient that I cannot use it on large datasets (aka Systems with 31 days average). So removing it
+
 reg_option["best"] = {
     _name: "",
     _data: [],
@@ -296,23 +301,32 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
         const diffArr = arr.map(a => (a - mu) ** 2);
         return Math.sqrt(this._sum(diffArr) / (arr.length - 1));
     },
-    _round: function(value, precision) {
-        const multiplier = Math.pow(10, precision || 0);
-        return Math.round(value * multiplier) / multiplier;
-    },
     _quantile: function(arr, q) {
         const sorted = this._asc(arr);
         const pos = (sorted.length - 1) * q;
         const base = Math.floor(pos);
         const rest = pos - base;
         if (sorted[base + 1] !== undefined) {
-            return this._round(sorted[base] + rest * (sorted[base + 1] - sorted[base]),1);
+            return round(sorted[base] + rest * (sorted[base + 1] - sorted[base]),1);
         } else {
-            return this._round(sorted[base],1);
+            return round(sorted[base],1);
         }
     },
     regression: true,
-    csv_header: ["Timestamp (UTC)", "Name", "Metric", "Data", "*Average", "*Standard Deviation", "*Quantile .95", "*Quantile .75", "*Median (Quantile .50)", "*Quantitle .25", "*Capacity Trendline Calculated Value", "*Success in Calculating Trendline (%)", "All values with * are computed within the extension and not coming from API"],
+    draw: {
+        title: "Transport", 
+        pointStart: 0,
+        pointInterval: 0, 
+        table: {
+            Name: {
+                dropdown: {}
+            },
+            Metric: {
+                dropdown: {}
+            }
+        }
+    },
+    csv_header: ["Timestamp", "Name", "Metric", "Data", "*Average", "*Standard Deviation", "*Quantile .95", "*Quantile .75", "*Median (Quantile .50)", "*Quantitle .25", "*Capacity Trendline Calculated Value", "*Success in Calculating Trendline (%)", "All values with * are computed within the extension and not coming from API"],
     csv: function (setup, resp=this.resp) {
         var items = [];
 
@@ -333,8 +347,6 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
             }
         }
 
-        let pointStart = 0;
-        let pointInterval = 0; 
         for (const [_, type] of Object.entries(resp.result)) {
             let bpsRx = [];
             let bpsTx = [];
@@ -366,13 +378,18 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
             for (let j = 0; j < type.series.length; j++) {
                 let dir = type.series[j];
                 if (j == 0) {
-                    pointStart = dir.startTime;
-                    pointInterval = dir.tickInterval;
+                    // For drawing in HighStock it is easier to use start point and interval. Converting it also to local timezone.
+                    this.draw.pointStart = dir.startTime - ((new Date()).getTimezoneOffset() * 60000);
+                    this.draw.pointInterval = dir.tickInterval;
                 }
                 if (bpsRx.length > 0 || bpsTx.length > 0) {
                     dir.data = dir.data.map(x => ((x*8*1000)/dir.tickInterval));
                     dir.metric = dir.metric.replace("bytes", "bitsPerSecond");
                 }
+
+                this.draw.table.Name.dropdown[type.link.displayName] = type.link.displayName;
+                this.draw.table.Metric.dropdown[dir.metric] = dir.metric; 
+
                 const cp_data = [...dir.data];
                 var mean      = round(this._mean(cp_data));
                 var std       = round(this._std(cp_data));
@@ -417,7 +434,7 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                 }
             }
         }
-        return [pointStart, pointInterval, items];
+        return items;
     }
 }
 
@@ -471,7 +488,7 @@ config["metrics/getEdgeAppMetrics"].csv = function (resp=this.resp) {
                 }
                 data.push(val);
             }
-            var percentage = this._round((arr.totalBytes / sumint[arr.linkId]) * 100, 2);
+            var percentage = round((arr.totalBytes / sumint[arr.linkId]) * 100, 2);
             data.push(sumint[arr.linkId]);
             data.push(percentage);
             items.push(data);
@@ -589,6 +606,16 @@ config ["metrics/getEdgeStatusSeries"] = {
     type: "csv",
     csv_header: ["Timestamp", "Metric", "Data (5 minute average)", "*Capacity Trendline", "*Success in Calculating Trendline", "All values with * are computed within the extension and not coming from API"],    
     regression: true,
+    draw: {
+        title: "Systems", 
+        pointStart: 0,
+        pointInterval: 0, 
+        table: {
+            Metric: {
+                dropdown: {}
+            }
+        }
+    },
     csv: function (setup, resp=this.resp) {
         var items = [];
 
@@ -637,19 +664,18 @@ config ["metrics/getEdgeStatusSeries"] = {
                 systems_reg[metric].setdata(systems[metric]);
             }
         }
-        let pointStart = 0;
-        let pointInterval = 0;
         for (let i = 0; i < resp.result.series.length; i++ ) {
             let arr = resp.result.series[i];
             let timestamp = new Date(arr.startTime).getTime(); 
             if (i == 0) {
-                pointStart = timestamp; 
+                this.draw.pointStart = timestamp; 
             }
             if (i == 1) {
-                pointInterval = timestamp - pointStart;
+                this.draw.pointInterval = timestamp - this.draw.pointStart;
             }
             for (const [metric, data] of Object.entries(arr)) {
                 if (metric != "startTime" && metric != "endTime"){
+                    this.draw.table.Metric.dropdown[metric] = metric;
                     if (reg) {
                         items.push([getDateTime(timestamp), metric, data, systems_reg[metric].getvalue(timestamp), systems_reg[metric].getr2()]);    
                     } else { 
@@ -659,7 +685,7 @@ config ["metrics/getEdgeStatusSeries"] = {
             }
         }
 
-        return [pointStart, pointInterval, items];
+        return items;
     }
 }
 
@@ -704,8 +730,14 @@ config ["linkQualityEvent/getLinkQualityEvents"] = {
         }
 
         for (const [key, type] of Object.entries(resp.result)) {
-            for (const [_, data] of Object.entries(type.timeseries)) {
+            //for (const [_, data] of Object.entries(type.timeseries)) {
+            for (let i = 0; i < type.timeseries.length; i++) {
+                let data = type.timeseries[i];
                 var timestamp = data.timestamp;
+                // Accomodate the fact that API may produce more samples if requested `maxSamples` is used. This ignores all data with same timestamp
+                if (i > 0 && timestamp == type.timeseries[i-1].timestamp) {
+                    continue;
+                } 
                 var jittertx, jitterrx, latencytx, latencyrx, pckttx, pcktrx, aqoe, vqoe, tqoe = null;
                 if (data.metadata.detail){
                     var detail = data.metadata.detail;
@@ -789,7 +821,6 @@ config ["FLOW_DUMP"] = {
 config["ROUTE_DUMP"] = Object.assign({},config["FLOW_DUMP"]);
 //config["ROUTE_DUMP"].setname();
 config["ROUTE_DUMP"].name = "Route Table Dump";
-
 
 config["ROUTE_DETAIL"] = Object.assign({},config["FLOW_DUMP"]);
 //config["ROUTE_DETAIL"].setname();
