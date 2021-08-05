@@ -38,6 +38,32 @@ function itemsToHtml (allRows) {
     return table;
 }
 
+function headerToHtml (allRows) {
+    var table = '<table id="dt-table" class="display nowrap">';
+    allRows[0].pop();
+    for (var singleRow = 0; singleRow < 1; singleRow++) {
+        if (singleRow === 0) {
+            table += '<thead>';
+            table += '<tr>';
+        }
+        var rowCells = allRows[singleRow];
+        for(var rowCell = 0; rowCell < rowCells.length; rowCell++){
+            if(singleRow === 0){
+                table += '<th>';
+                table += rowCells[rowCell];
+                table += '</th>';
+            }
+        }
+        if (singleRow === 0) {
+            table += '</tr>';
+            table += '</thead>';
+        }
+    }
+    table += '</tbody>';
+    table += '</table>';
+
+    return table;
+}
 function bytes(bytes, label) {
     if (bytes == 0) return '';
     var s = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
@@ -56,11 +82,7 @@ function getTableData(table) {
 
   table.rows({ search: "applied" }).every(function() {
     let data = this.data();
-    let tmp = data[0].split(" ");
-    let date = tmp[0].split("-");
-    let time = tmp[1].split(":");
-    let datetime = new Date(date[0], date[1]-1, date[0], time[0], time[1]).getTime();
-
+    
     timeArr.push(data[0]);
     // TODO: Hack and need to be done via config not via title
     if (title == "Systems") {
@@ -120,7 +142,7 @@ function createHighcharts2(data) {
             type: 'all',
             text: 'All'
         }],
-        selected: 1
+        selected: 6
     },
 
     navigator :{
@@ -345,12 +367,12 @@ let draw = false;
 
 function setTableEvents(table) {
   // listen for page clicks
-  table.on("page", () => {
-    draw = true;
-  });
+  //table.on("page", () => {
+  //  draw = true;
+  //});
 
   // listen for updates and adjust the chart accordingly
-  table.on("keyup change draw", () => {
+  table.on("change draw", () => {
     if (draw) {
       draw = false;
     } else {
@@ -359,6 +381,18 @@ function setTableEvents(table) {
     }
   });
 }
+
+// https://stackoverflow.com/questions/1909441/how-to-delay-the-keyup-handler-until-the-user-stops-typing
+function delay(callback, ms) {
+  var timer = 0;
+  return function() {
+    var context = this, args = arguments;
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      callback.apply(context, args);
+    }, ms || 0);
+  };
+}
  
 $(function () {
     var html = "";
@@ -366,33 +400,63 @@ $(function () {
         if (request.action != "draw"){
            return true;
         }
-        title = request.title;        
-        pointStart = request.pointStart;
-        pointInterval = request.pointInterval;
+        const draw = JSON.parse(request.draw);
+        title = draw.title;        
+        pointStart = draw.pointStart;
+        pointInterval = draw.pointInterval;
         const items = JSON.parse(request.items);
-        html = itemsToHtml(items);
 
-        $(".container").append(html);    
+        html = headerToHtml(items);
+        items.shift();
+        $(".container").append(html);      
+        //html = itemsToHtml(items);
+        //$(".container").append(html);    
         $('#dt-table thead tr').clone(true).appendTo( '#dt-table thead' );
         $('#dt-table thead tr:eq(1) th').each(function (i) {
-            var title = $(this).text();
-            $(this).html( '<input type="text" placeholder="Search '+title+'" />' );
-            $('input',this).on( 'keyup change', function () {
-                if ( table.column(i).search() !== this.value ) {
-                    table
-                        .column(i)
-                        .search( this.value )
-                        .draw();
-                }
-            });
+            let header = $(this).text();
+            if (!draw.table.hasOwnProperty(header)) {
+                $(this).html( '<input type="text" placeholder="Search '+header+'" />' );
+                $('input',this).on( 'keyup change', delay(function () {
+                    if ( table.column(i).search() !== this.value ) {
+                        table
+                            .column(i)
+                            .search( this.value )
+                            .draw();
+                    }
+                }, 500));
+            } else if (draw.table[header].hasOwnProperty("dropdown")) {
+                console.log(draw.table[header]);
+                let option = "<select>";
+                $.each(draw.table[header].dropdown, function (key, value) {
+                    option += "<option value='"+key+"'>"+key+"</option>";
+                });
+                option += "</select>";
+                $(this).html(option);      
+                $('select', this).on('change', function() {
+                    if (table.column(i).search() !== this.value ) {
+                        table
+                            .column(i)
+                            .search( this.value )
+                            .draw();
+                    }
+                });
+            } 
         });
-        const table = $("#dt-table").DataTable({
-            orderCellsTop: true,
-            fixedHeader: true
+        const table = $("#dt-table").DataTable( {
+            data:           items,
+            deferRender:    true,
+            scrollY:        600,
+            scrollCollapse: false,
+            scroller:       true,
+            ordering:       false,
+            fixedHeader:    true
         });
+
+        $('select').prop("selectedIndex", 0).change();
+
         const tableData = getTableData(table);
         createHighcharts2(tableData);
-        setTableEvents(table);
+        setTableEvents(table);  
     });
 });
          
