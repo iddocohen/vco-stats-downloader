@@ -363,18 +363,19 @@ function createHighcharts(data) {
   });
 }
 
-let draw = false;  
+let triggerdraw = false;  
 
 function setTableEvents(table) {
   // listen for page clicks
-  //table.on("page", () => {
-  //  draw = true;
-  //});
+  table.on("page", () => {
+    triggerdraw = true;
+  });
 
   // listen for updates and adjust the chart accordingly
+  
   table.on("change draw", () => {
-    if (draw) {
-      draw = false;
+    if (triggerdraw) {
+      triggerdraw = false;
     } else {
       const tableData = getTableData(table);
       createHighcharts2(tableData);
