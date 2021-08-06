@@ -1,6 +1,7 @@
-var title = "";
+let title = "";
 let pointStart = 0;
 let pointInterval = 0;
+let yAxis = "";
 
 function itemsToHtml (allRows) {
     var table = '<table id="dt-table">';
@@ -154,11 +155,10 @@ function createHighcharts2(data) {
     },
     xAxis: {
         type:'datetime'
-
     },
     yAxis: {
         title: {
-            text: 'Metric'
+            text: yAxis
         },
         labels: {
             formatter: function () {
@@ -187,8 +187,8 @@ function createHighcharts2(data) {
         }
     },
     series: [
-    {
-        name: '',
+    { 
+        name: yAxis + ' over Time',
         data: data[1],
         pointStart: pointStart,
         pointInterval: pointInterval,
@@ -197,7 +197,7 @@ function createHighcharts2(data) {
         }
     },
     {
-        name: '',
+        name: 'Trendline over Time',
         data: data[2],
         pointStart: pointStart,
         pointInterval: pointInterval,
@@ -426,14 +426,18 @@ $(function () {
                     }
                 }, 500));
             } else if (draw.table[header].hasOwnProperty("dropdown")) {
-                console.log(draw.table[header]);
-                let option = "<select>";
+                let option = "<select id='"+header+"'>";
                 $.each(draw.table[header].dropdown, function (key, value) {
                     option += "<option value='"+key+"'>"+key+"</option>";
                 });
                 option += "</select>";
                 $(this).html(option);      
-                $('select', this).on('change', function() {
+                $('select', this).on('change', function(e) {
+                    if($(this)[0].id === "Metric") {
+                        let name = this.value.replace(/([A-Z])/g, ' $1').trim();
+                        name = name.charAt(0).toUpperCase() + name.slice(1);
+                        yAxis = name;
+                    }
                     if (table.column(i).search() !== this.value ) {
                         table
                             .column(i)
@@ -446,7 +450,7 @@ $(function () {
         const table = $("#dt-table").DataTable( {
             data:           items,
             deferRender:    true,
-            scrollY:        600,
+            scrollY:        300,
             scrollCollapse: false,
             scroller:       true,
             ordering:       false,
