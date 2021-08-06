@@ -651,16 +651,19 @@ config ["metrics/getEdgeStatusSeries"] = {
             }
             var systems_reg = {};
             for (metric in systems) {
-                //systems_reg[metric] = Object.assign({},reg_option[reg_type]);
+                this.draw.table.Metric.dropdown[metric] = metric;
+                systems_reg[metric] = Object.assign({},reg_option[reg_type]);
                 //systems_reg[metric] = JSON.parse(JSON.stringify(reg_option[reg_type]));
                 //systems_reg[metric] = clone(reg_option[reg_type]);
                 //systems_reg[metric] = clone(reg_option[reg_type]);
+                /* Need to do a better copy for "best" capacity calculation. I cannot find a better way hence disabling it.
                 systems_reg[metric] = {};
                 for (let k in reg_option[reg_type]){
                     if (reg_option[reg_type].hasOwnProperty(k)) {
                         systems_reg[metric][k] = reg_option[reg_type][k];
                     } 
                 }
+                */
                 systems_reg[metric].setdata(systems[metric]);
             }
         }
@@ -675,7 +678,6 @@ config ["metrics/getEdgeStatusSeries"] = {
             }
             for (const [metric, data] of Object.entries(arr)) {
                 if (metric != "startTime" && metric != "endTime"){
-                    this.draw.table.Metric.dropdown[metric] = metric;
                     if (reg) {
                         items.push([getDateTime(timestamp), metric, data, systems_reg[metric].getvalue(timestamp), systems_reg[metric].getr2()]);    
                     } else { 
@@ -683,6 +685,17 @@ config ["metrics/getEdgeStatusSeries"] = {
                     }
                 }
             }
+        }
+        if (reg) {
+              let result = new Date(timestamp);
+              let future_date = result.setDate(result.getDate() + parseInt(reg_time));
+              console.log(future_date);
+              while (timestamp < future_date) {
+                    for (const [metric, _ ] of Object.entries(systems)) {
+                        items.push([getDateTime(timestamp), metric, "", systems_reg[metric].getvalue(timestamp), systems_reg[metric].getr2()]);    
+                    }
+                    timestamp += this.draw.pointInterval;
+              } 
         }
 
         return items;
