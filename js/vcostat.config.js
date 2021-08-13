@@ -6,6 +6,7 @@ function getDateTime (timestamp) {
     const time = dateAndTime[1].split(':');
     return dateAndTime[0]+' '+time[0]+':'+time[1];
 }
+
 function clone (obj) {
     var clone = {};
     for (let k in obj){
@@ -20,6 +21,64 @@ function round(number, precision) {
     const multiplier = Math.pow(10, precision || 0);
     return Math.round(number * multiplier) / multiplier;
 }
+
+function cuberoot(x) {
+    var y = Math.pow(Math.abs(x), 1/3);
+    return x < 0 ? -y : y;
+}
+// https://stackoverflow.com/questions/27176423/function-to-solve-cubic-equation-analytically
+function solveCubic(a, b, c, d) {
+    //let eps = Number.EPSILON;
+    let eps = 1e-64;
+    if (Math.abs(a) < eps) { // Quadratic case, ax^2+bx+c=0
+        a = b; b = c; c = d;
+        if (Math.abs(a) < eps) { // Linear case, ax+b=0
+            a = b; b = c;
+            if (Math.abs(a) < eps) // Degenerate case
+                return [];
+            return [-b/a];
+        }
+
+        var D = b*b - 4*a*c;
+        if (Math.abs(D) < eps) {
+            return [-b/(2*a)];
+        } else if (D > 0)
+            return [(-b+Math.sqrt(D))/(2*a), (-b-Math.sqrt(D))/(2*a)];
+        return [];
+    }
+
+    eps = Number.EPSILON;
+
+    // Convert to depressed cubic t^3+pt+q = 0 (subst x = t - b/3a)
+    var p = (3*a*c - b*b)/(3*a*a);
+    var q = (2*b*b*b - 9*a*b*c + 27*a*a*d)/(27*a*a*a);
+    var roots;
+
+    if (Math.abs(p) < eps) { // p = 0 -> t^3 = -q -> t = -q^1/3
+        roots = [cuberoot(-q)];
+    } else if (Math.abs(q) < eps) { // q = 0 -> t^3 + pt = 0 -> t(t^2+p)=0
+        roots = [0].concat(p < 0 ? [Math.sqrt(-p), -Math.sqrt(-p)] : []);
+    } else {
+        var D = q*q/4 + p*p*p/27;
+        if (Math.abs(D) < eps) {       // D = 0 -> two roots
+            roots = [-1.5*q/p, 3*q/p];
+        } else if (D > 0) {             // Only one real root
+            var u = cuberoot(-q/2 - Math.sqrt(D));
+            roots = [u - p/(3*u)];
+        } else {                        // D < 0, three roots, but needs to use complex numbers/trigonometric solution
+            var u = 2*Math.sqrt(-p/3);
+            var t = Math.acos(3*q/p/u)/3;  // D < 0 implies p < 0 and acos argument in [-1..1]
+            var k = 2*Math.PI/3;
+            roots = [u*Math.cos(t), u*Math.cos(t-k), u*Math.cos(t-2*k)];
+        }
+    }
+
+    // Convert back from depressed cubic
+    for (var i = 0; i < roots.length; i++)
+        roots[i] -= b/(3*a);
+
+    return roots;
+}   
 
 var reg_math = {
     _poly_getvalue: function (x, reg) {
@@ -77,6 +136,16 @@ var reg_math = {
             return "";
         }
         return reg.string;
+    },
+    _getroots: function (coeff, max) {
+        [a,b,c,d] = coeff;
+        d = d - max;
+        let root = solveCubic(a,b,c,d);
+        console.log(root);
+        if (root.length > 0) {
+            return round(root[0]);
+        }
+        return 0;
     }
 };
 
@@ -98,8 +167,11 @@ reg_option["polynomial_3"] = {
     },
     geteq: function () {
        return reg_math._geteq(this._reg);
-    }                  
-    
+    },               
+    getroots: function(max) {
+        let coeff = [...this._reg.equation].reverse();
+        return reg_math._getroots(coeff, max); 
+    }   
 };
 reg_option["polynomial_2"] = {
     _reg: null,
@@ -118,7 +190,11 @@ reg_option["polynomial_2"] = {
     },
     geteq: function () {
        return reg_math._geteq(this._reg);
-    }                  
+    },
+    getroots: function(max) {
+        let coeff = [...this._reg.equation].reverse();
+        return reg_math._getroots(coeff, max); 
+    }                 
 };                  
 reg_option["linear"] = {
     _reg: null,
@@ -137,7 +213,13 @@ reg_option["linear"] = {
     },
     geteq: function () {
        return reg_math._geteq(this._reg);
-    }                  
+    },
+    getroots: function(max) {
+        let coeff = [...this._reg.equation];
+        coeff.unshift(0);
+        coeff.unshift(0);
+        return reg_math._getroots(coeff, max); 
+    }                 
 };
 reg_option["logarithmic"] = {
     _reg: null,
@@ -156,6 +238,12 @@ reg_option["logarithmic"] = {
     },
     geteq: function () {
        return reg_math._geteq(this._reg);
+    },
+     getroots: function(max) {
+        let coeff = [...this._reg.equation];
+        coeff.unshift(0);
+        coeff.unshift(0);
+        return reg_math._getroots(coeff, max); 
     }                  
 };
 
@@ -316,7 +404,20 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
     draw: {
         title: "Transport", 
         pointStart: 0,
-        pointInterval: 0, 
+        pointInterval: 0,
+        pointEnd: 0,
+        edge: "",
+        name: "",
+        notfication: {
+            summary: {
+                bitsPerSecondRx_1300:  { str: "Overall edge capacity for 1300 byte packets is %CAP%. Downstream throughput will approx. reach it in ", max_capacity: 0, current_value: 0, future_edges: [] },
+                bitsPerSecondRx_imix:  { str: "Overall edge capacity for IMIX packets is %CAP%. Downstream throughput will approx. reach it in ", max_capacity: 0, current_value: 0, future_edges: [] },
+                bitsPerSecondRx_64:    { str: "Overall edge capacity for 64 byte packets is %CAP%. Downstream throughput will approx. reach it in ", max_capacity: 0, current_value: 0, future_edges: [] },
+                bitsPerSecondTx_1300:  { str: "Overall edge capacity for 1300 byte packets is %CAP%. Uplink throughput will approx. reach it in ", max_capacity: 0, current_value: 0, future_edges: [] },
+                bitsPerSecondTx_imix:  { str: "Overall edge capacity for IMIX packets is %CAP%. Uplink throughput will approx. reach it in ", max_capacity: 0, current_value: 0, future_edges: [] },
+                bitsPerSecondTx_64:    { str: "Overall edge capacity for 64 byte packets is %CAP%. Uplink throughput will approx. reach it in ", max_capacity: 0, current_value: 0, future_edges: [] },
+            }
+        },
         table: {
             Name: {
                 dropdown: {}
@@ -334,6 +435,9 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
             items.push(this.csv_header);
         }
 
+        this.draw.edge   = config["edge/getEdge"].getmodel() || "";
+        this.draw.name   = config["edge/getEdge"].getname() || "";
+
         var reg = false;
         var reg_type;
         var reg_time;
@@ -346,6 +450,32 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                 }
             }
         }
+        // Creating a total system statistics and append it to existing result
+        let total_systems = {
+            link: {
+                displayName: "Overall",
+            },
+            series: []
+        };
+        for (const [_, type] of Object.entries(resp.result)) {
+            for (let i = 0; i < type.series.length; i++) {
+                let dir = type.series[i];
+                if (total_systems.series[i] === undefined) {
+                    total_systems.series.push({});
+                    total_systems.series[i] = Object.assign({},dir); 
+                    total_systems.series[i].data = [...dir.data];
+                    delete total_systems.series[i].max;
+                    delete total_systems.series[i].min;
+                    delete total_systems.series[i].total;
+                    continue;
+                } 
+                for (let j = 0; j < dir.data.length; j++) {
+                    total_systems.series[i].data[j] += dir.data[j];
+                    //total_systems.series[i].data[j] = 0;
+                }
+            }
+        }
+        resp.result.push(total_systems);
 
         for (const [_, type] of Object.entries(resp.result)) {
             let bpsRx = [];
@@ -411,6 +541,19 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                     }
                     reg_option[reg_type].setdata(reg_data);
                 }
+                if (dir.metric === "bitsPerSecondRx" || (dir.metric === "bitsPerSecondTx") {
+                    let a = ["_1300", "_imix", "_64"];
+                    // Get maximum throughput for edge with 1300,imix and 64 bytes packets and calculate when this will be reached
+                    for (let x = 0; x < a.length; x++) {
+                        let metric = dir.metric.concat(a[x]); 
+                        let dict   = dictonary(metric);
+                        let max    = dict.max(this.draw.edge);
+                        this.draw.subtitle.summary[metric].max_capacity   = max;
+                        this.draw.subtitle.summary[metric].current_value  = reg_option[reg_type].getroots(max);
+                        this.draw.subtitle.summary[metric].future_edges   = dict.find(this.draw.edge); 
+                    }
+                }
+
                 timestamp = dir.startTime;
                 for (let i = 0; i < dir.data.length; i++){
                     var val = dir.data[i];
@@ -423,6 +566,9 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                     }
                     timestamp += dir.tickInterval;
                 }
+
+                this.draw.pointEnd = timestamp;
+
                 if (reg) {
                       var result = new Date(timestamp);
                       var future_date = result.setDate(result.getDate() + parseInt(reg_time));
@@ -544,6 +690,20 @@ config ["edge/getEdge"] = {
             }
         }
         return false;
+    },
+    getmodel: function() {
+        if (jQuery.isEmptyObject(this.resp)){
+            return false;
+        }
+
+        return this.resp.result.modelNumber;
+    },
+    getname: function() {
+        if (jQuery.isEmptyObject(this.resp)) {
+            return false;
+        }
+
+        return this.resp.result.name;
     }
 
 }
@@ -610,6 +770,15 @@ config ["metrics/getEdgeStatusSeries"] = {
         title: "Systems", 
         pointStart: 0,
         pointInterval: 0, 
+        pointEnd: 0,
+        edge: "",
+        name: "",
+        notfication: {
+            summary: {
+                flowCount: { max_capacity: 0, current_value: 0, future_edges: [] },
+                tunnelCount: { max_capacity: 0, current_value: 0, future_edges: [] }
+            }
+        },
         table: {
             Metric: {
                 dropdown: {}
@@ -650,8 +819,12 @@ config ["metrics/getEdgeStatusSeries"] = {
                 }
             }
             var systems_reg = {};
+            var systems_max = {};
+            
+            this.draw.edge   = config["edge/getEdge"].getmodel() || "";
+            this.draw.name   = config["edge/getEdge"].getname() || "";
+
             for (metric in systems) {
-                this.draw.table.Metric.dropdown[metric] = metric;
                 systems_reg[metric] = Object.assign({},reg_option[reg_type]);
                 //systems_reg[metric] = JSON.parse(JSON.stringify(reg_option[reg_type]));
                 //systems_reg[metric] = clone(reg_option[reg_type]);
@@ -665,6 +838,16 @@ config ["metrics/getEdgeStatusSeries"] = {
                 }
                 */
                 systems_reg[metric].setdata(systems[metric]);
+                if (!this.draw.edge) {
+                    continue;
+                }
+                if (this.draw.subtitle.summary.hasOwnProperty(metric)) {
+                    let dict = dictonary(metric);
+                    let max = dict.max(this.draw.edge);
+                    this.draw.subtitle.summary[metric].max_capacity   = max;
+                    this.draw.subtitle.summary[metric].current_value  = systems_reg[metric].getroots(max);
+                    this.draw.subtitle.summary[metric].future_edges   = dict.find(this.draw.edge);
+                }
             }
         }
         for (let i = 0; i < resp.result.series.length; i++ ) {
@@ -678,6 +861,7 @@ config ["metrics/getEdgeStatusSeries"] = {
             }
             for (const [metric, data] of Object.entries(arr)) {
                 if (metric != "startTime" && metric != "endTime"){
+                    this.draw.table.Metric.dropdown[metric] = metric;
                     if (reg) {
                         items.push([getDateTime(timestamp), metric, data, systems_reg[metric].getvalue(timestamp), systems_reg[metric].getr2()]);    
                     } else { 
@@ -686,10 +870,12 @@ config ["metrics/getEdgeStatusSeries"] = {
                 }
             }
         }
+
+        this.draw.pointEnd = timestamp;
+
         if (reg) {
               let result = new Date(timestamp);
               let future_date = result.setDate(result.getDate() + parseInt(reg_time));
-              console.log(future_date);
               while (timestamp < future_date) {
                     for (const [metric, _ ] of Object.entries(systems)) {
                         items.push([getDateTime(timestamp), metric, "", systems_reg[metric].getvalue(timestamp), systems_reg[metric].getr2()]);    
