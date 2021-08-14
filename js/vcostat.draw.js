@@ -49,11 +49,11 @@ function formatTitle (key="summary") {
         html += "("+draw.edge+")";
     }
 
-    if (!draw.notification.hasOwnProperty(key)) {
+    if (!draw.notfication.hasOwnProperty(key)) {
         return html;
     }
 
-    let object = draw.notification[key]; 
+    let object = draw.notfication[key]; 
     
     //let upgarde_edge = {};
 
@@ -76,7 +76,7 @@ function formatTitle (key="summary") {
             continue;
         }
         // "Maxium capacity of <metric> is <number>. This will be reached <date>."
-        if (!obj.hasPropertyOwn("str") {
+        if (obj.str === undefined) {
             divhtml += "Maximum capacity of "+metric+" is "+obj.max_capacity;
             divhtml += " for this edge type. This will be reached appox. ";
         } else {

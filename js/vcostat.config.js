@@ -28,8 +28,9 @@ function cuberoot(x) {
 }
 // https://stackoverflow.com/questions/27176423/function-to-solve-cubic-equation-analytically
 function solveCubic(a, b, c, d) {
-    //let eps = Number.EPSILON;
-    let eps = 1e-64;
+    let eps = Number.EPSILON;
+    //let eps = 1e-64;
+    /*
     if (Math.abs(a) < eps) { // Quadratic case, ax^2+bx+c=0
         a = b; b = c; c = d;
         if (Math.abs(a) < eps) { // Linear case, ax+b=0
@@ -45,9 +46,26 @@ function solveCubic(a, b, c, d) {
         } else if (D > 0)
             return [(-b+Math.sqrt(D))/(2*a), (-b-Math.sqrt(D))/(2*a)];
         return [];
+
+    */
+    if (a == 0) { // Quadratic case, ax^2+bx+c=0
+        a = b; b = c; c = d;
+        if (a == 0) { // Linear case, ax+b=0
+            a = b; b = c;
+            if (a == 0) // Degenerate case
+                return [];
+            return [-b/a];
+        }
+
+        var D = b*b - 4*a*c;
+        if (D == 0) {
+            return [-b/(2*a)];
+        } else if (D > 0)
+            return [(-b+Math.sqrt(D))/(2*a), (-b-Math.sqrt(D))/(2*a)];
+        return [];
     }
 
-    eps = Number.EPSILON;
+    //eps = Number.EPSILON;
 
     // Convert to depressed cubic t^3+pt+q = 0 (subst x = t - b/3a)
     var p = (3*a*c - b*b)/(3*a*a);
@@ -141,6 +159,7 @@ var reg_math = {
         [a,b,c,d] = coeff;
         d = d - max;
         let root = solveCubic(a,b,c,d);
+        console.log(coeff);
         console.log(root);
         if (root.length > 0) {
             return round(root[0]);
@@ -410,12 +429,9 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
         name: "",
         notfication: {
             summary: {
-                bitsPerSecondRx_1300:  { str: "Overall edge capacity for 1300 byte packets is %CAP%. Downstream throughput will approx. reach it in ", max_capacity: 0, current_value: 0, future_edges: [] },
-                bitsPerSecondRx_imix:  { str: "Overall edge capacity for IMIX packets is %CAP%. Downstream throughput will approx. reach it in ", max_capacity: 0, current_value: 0, future_edges: [] },
-                bitsPerSecondRx_64:    { str: "Overall edge capacity for 64 byte packets is %CAP%. Downstream throughput will approx. reach it in ", max_capacity: 0, current_value: 0, future_edges: [] },
-                bitsPerSecondTx_1300:  { str: "Overall edge capacity for 1300 byte packets is %CAP%. Uplink throughput will approx. reach it in ", max_capacity: 0, current_value: 0, future_edges: [] },
-                bitsPerSecondTx_imix:  { str: "Overall edge capacity for IMIX packets is %CAP%. Uplink throughput will approx. reach it in ", max_capacity: 0, current_value: 0, future_edges: [] },
-                bitsPerSecondTx_64:    { str: "Overall edge capacity for 64 byte packets is %CAP%. Uplink throughput will approx. reach it in ", max_capacity: 0, current_value: 0, future_edges: [] },
+                totalbitsPerSecond_1300:  { str: "Overall edge capacity for 1300 byte packets is %CAP%. Downstream throughput will approx. reach it in ", max_capacity: 0, current_value: 0, future_edges: [] },
+                totalbitsPerSecond_imix:  { str: "Overall edge capacity for IMIX packets is %CAP%. Downstream throughput will approx. reach it in ", max_capacity: 0, current_value: 0, future_edges: [] },
+                totalbitsPerSecond_64:    { str: "Overall edge capacity for 64 byte packets is %CAP%. Downstream throughput will approx. reach it in ", max_capacity: 0, current_value: 0, future_edges: [] },
             }
         },
         table: {
@@ -457,7 +473,30 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
             },
             series: []
         };
+
+        let removedBps = false;
         for (const [_, type] of Object.entries(resp.result)) {
+            // Removing bpsOfBestPathTx and Rx, as really not needed 
+            for (let i = type.series.length; i--;) {
+                if (type.series[i].metric === "bpsOfBestPathTx" || type.series[i].metric === "bpsOfBestPathRx"){
+                    //bpsTx = [...type.series[i].data];
+                    removedBps = true;
+                    type.series.splice(i, 1);
+                }
+            }
+            // API returns several bytesRx as this is getting requested by the UI. Not sure why the UI asks for it. Hence deleting one and only when bpsOfBestPathRx is set.
+            if (removedBps){
+                let foundRx = null;
+                for (let i=0; i < type.series.length; i++) {
+                    if (type.series[i].metric === "bytesRx"){
+                        foundRx = i;
+                    }
+                }
+                if (foundRx) {
+                    type.series.splice(foundRx,1);
+                }
+            }
+ 
             for (let i = 0; i < type.series.length; i++) {
                 let dir = type.series[i];
                 if (total_systems.series[i] === undefined) {
@@ -471,40 +510,39 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                 } 
                 for (let j = 0; j < dir.data.length; j++) {
                     total_systems.series[i].data[j] += dir.data[j];
-                    //total_systems.series[i].data[j] = 0;
                 }
             }
         }
+        // Constructing totalBytes for the systems by searching for all bytesRx and bytesTx in total_systems
+        let bytesRx = [];
+        let bytesTx = [];
+        for (let i = 0; i < total_systems.series.length; i++) {
+            if (total_systems.series[i].metric === "bytesRx") {
+                bytesRx = [...total_systems.series[i].data];
+            }
+            if (total_systems.series[i].metric === "bytesTx") {
+                bytesTx = [...total_systems.series[i].data];
+            }
+        }
+        // Adding the arrays together and pushing the new metric into total_systems.
+        if (bytesRx.length > 0 && bytesRx.length === bytesTx.length) {
+            let totalBytes = bytesRx.map(function (num, idx) {
+                return num + bytesTx[idx];
+            })
+            total_systems.series.push({
+                metric: "totalbytes",
+                data: totalBytes,
+                startTime: total_systems.series[0].startTime,
+                tickInterval: total_systems.series[0].tickInterval 
+            });
+        }
+
+        // Pushing the total_systems into the original response
+        console.log(total_systems);
         resp.result.push(total_systems);
 
         for (const [_, type] of Object.entries(resp.result)) {
-            let bpsRx = [];
-            let bpsTx = [];
-            for (let i = type.series.length; i--;) {
-                if (type.series[i].metric === "bpsOfBestPathTx"){
-                    bpsTx = [...type.series[i].data];
-                    type.series.splice(i, 1);
-                }
-            }
-            for (let i = type.series.length; i--;) {
-                if (type.series[i].metric === "bpsOfBestPathRx"){
-                    bpsRx = [...type.series[i].data];
-                    type.series.splice(i, 1);
-                }
-            }
-            // API returns several bytesRx as this is getting requested by the UI. Not sure why the UI asks for it. Hence deleting one and only when bpsOfBestPathRx is set.
-            if (bpsRx.length > 0){
-                let foundRx = null;
-                for (let i=0; i < type.series.length; i++) {
-                    if (type.series[i].metric === "bytesRx"){
-                        foundRx = i;
-                    }
-                }
-                if (foundRx) {
-                    type.series.splice(foundRx,1);
-                }
-            }
-            
+           
             for (let j = 0; j < type.series.length; j++) {
                 let dir = type.series[j];
                 if (j == 0) {
@@ -512,8 +550,8 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                     this.draw.pointStart = dir.startTime - ((new Date()).getTimezoneOffset() * 60000);
                     this.draw.pointInterval = dir.tickInterval;
                 }
-                if (bpsRx.length > 0 || bpsTx.length > 0) {
-                    dir.data = dir.data.map(x => ((x*8*1000)/dir.tickInterval));
+                if (removedBps) {
+                    dir.data = dir.data.map(x => round(((x*8*1000)/dir.tickInterval)));
                     dir.metric = dir.metric.replace("bytes", "bitsPerSecond");
                 }
 
@@ -541,16 +579,17 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                     }
                     reg_option[reg_type].setdata(reg_data);
                 }
-                if (dir.metric === "bitsPerSecondRx" || (dir.metric === "bitsPerSecondTx") {
+                if (dir.metric === "totalbitsPerSecond") {
                     let a = ["_1300", "_imix", "_64"];
                     // Get maximum throughput for edge with 1300,imix and 64 bytes packets and calculate when this will be reached
                     for (let x = 0; x < a.length; x++) {
                         let metric = dir.metric.concat(a[x]); 
+                        console.log(metric);
                         let dict   = dictonary(metric);
                         let max    = dict.max(this.draw.edge);
-                        this.draw.subtitle.summary[metric].max_capacity   = max;
-                        this.draw.subtitle.summary[metric].current_value  = reg_option[reg_type].getroots(max);
-                        this.draw.subtitle.summary[metric].future_edges   = dict.find(this.draw.edge); 
+                        this.draw.notfication.summary[metric].max_capacity   = max;
+                        this.draw.notfication.summary[metric].current_value  = reg_option[reg_type].getroots(max);
+                        this.draw.notfication.summary[metric].future_edges   = dict.find(this.draw.edge); 
                     }
                 }
 
@@ -841,12 +880,12 @@ config ["metrics/getEdgeStatusSeries"] = {
                 if (!this.draw.edge) {
                     continue;
                 }
-                if (this.draw.subtitle.summary.hasOwnProperty(metric)) {
+                if (this.draw.notfication.summary.hasOwnProperty(metric)) {
                     let dict = dictonary(metric);
                     let max = dict.max(this.draw.edge);
-                    this.draw.subtitle.summary[metric].max_capacity   = max;
-                    this.draw.subtitle.summary[metric].current_value  = systems_reg[metric].getroots(max);
-                    this.draw.subtitle.summary[metric].future_edges   = dict.find(this.draw.edge);
+                    this.draw.notfication.summary[metric].max_capacity   = max;
+                    this.draw.notfication.summary[metric].current_value  = systems_reg[metric].getroots(max);
+                    this.draw.notfication.summary[metric].future_edges   = dict.find(this.draw.edge);
                 }
             }
         }

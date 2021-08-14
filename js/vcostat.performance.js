@@ -253,25 +253,18 @@ function dictonary (metric) {
             obj.max = max_tunnel;
             obj.find = find_next_edge_tunnel;
             break;
-        case "bitsPerSecondRx_1300":
+        case "totalbitsPerSecond_1300":
             obj.max = max_throughput_1300;
             obj.find = find_next_edge_throughput_1300;
-        case "bitsPerSecondRx_imix":
+            break;
+        case "totalbitsPerSecond_imix":
             obj.max = max_throughput_imix;
             obj.find = find_next_edge_throughput_imix;
-        case "bitsPerSecondRx_64":
+            break;
+        case "totalbitsPerSecond_64":
             obj.max = max_throughput_64;
             obj.find = find_next_edge_throughput_64;
-         case "bitsPerSecondTx_1300":
-            obj.max = max_throughput_1300;
-            obj.find = find_next_edge_throughput_1300;
-        case "bitsPerSecondTx_imix":
-            obj.max = max_throughput_imix;
-            obj.find = find_next_edge_throughput_imix;
-        case "bitsPerSecondTx_64":
-            obj.max = max_throughput_64;
-            obj.find = find_next_edge_throughput_64;
-
+            break;
     }
     return obj;
 }
