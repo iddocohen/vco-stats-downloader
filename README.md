@@ -24,9 +24,12 @@ Depending on the demand, I might program a switch for enable/disable the plugin.
 
 ## Versions
 * Current not tested (future v1.4):
+    * Add feature to get notified that performance of the platform will be reached soon.
+        * "Tunnel Count", "Max Concurrent Flows" are "Max Throughput per 1300/IMIX/64 byte packets" are all factors dictating which edge to use. When capacity trendline is now calculated, a notification will popup to tell how far away one is from each.
     * Add support for future trendline calculation for Systems based properties. 
     * Altered drawing graph to support better data handling.
     * "bitsPerSecond" will be computed now when "Average Throughput" is selected in the UI for Transport.
+    * "totalbitsPerSecond" will be computed now for all links when "Average Throughput" is selected in the UI for Transport. Important for the notification. 
     * Removing outliner from "Transport (Upper)" to calculate a better trendline. 
     * Removing some stats from "Transpor (Upper)" statistics that are unrelated to calculations (to increase performance). 
 * 1.3:
