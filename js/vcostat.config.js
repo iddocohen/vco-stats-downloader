@@ -26,77 +26,93 @@ function cuberoot(x) {
     var y = Math.pow(Math.abs(x), 1/3);
     return x < 0 ? -y : y;
 }
-// https://stackoverflow.com/questions/27176423/function-to-solve-cubic-equation-analytically
-function solveCubic(a, b, c, d) {
-    let eps = Number.EPSILON;
-    //let eps = 1e-64;
-    /*
-    if (Math.abs(a) < eps) { // Quadratic case, ax^2+bx+c=0
+
+// Similar to https://stackoverflow.com/questions/27176423/function-to-solve-cubic-equation-analytically but different
+function solveCubic2(a, b, c, d) {
+    let result = [{r:0, i:0}, {r: 0, i: 0}, {r:0, i:0}];
+    if (a === 0) { // Quadratic case, ax^2+bx+c=0
         a = b; b = c; c = d;
-        if (Math.abs(a) < eps) { // Linear case, ax+b=0
+        if (a === 0) { // Linear case, ax+b=0
             a = b; b = c;
-            if (Math.abs(a) < eps) // Degenerate case
+            if (a === 0) // Degenerate case
                 return [];
-            return [-b/a];
+            result[2].r = -b/a;
+            return result;
         }
 
-        var D = b*b - 4*a*c;
-        if (Math.abs(D) < eps) {
-            return [-b/(2*a)];
-        } else if (D > 0)
-            return [(-b+Math.sqrt(D))/(2*a), (-b-Math.sqrt(D))/(2*a)];
-        return [];
-
-    */
-    if (a == 0) { // Quadratic case, ax^2+bx+c=0
-        a = b; b = c; c = d;
-        if (a == 0) { // Linear case, ax+b=0
-            a = b; b = c;
-            if (a == 0) // Degenerate case
-                return [];
-            return [-b/a];
+        const D = b*b - 4*a*c;
+        if (D === 0) {
+            result[2].r = -b/(2*a);
+            return result;
+        } else if (D > 0) {
+            result[1].r = (-b+Math.sqrt(D))/(2*a);
+            result[2].r = (-b-Math.sqrt(D))/(2*a);
+            return result;
         }
-
-        var D = b*b - 4*a*c;
-        if (D == 0) {
-            return [-b/(2*a)];
-        } else if (D > 0)
-            return [(-b+Math.sqrt(D))/(2*a), (-b-Math.sqrt(D))/(2*a)];
         return [];
     }
+    
+    // constants
+    const eps = Number.EPSILON;
+    const j = b / a;
+    const k = c / a;
+    const l = d / a;
+    const p = -(j * j / 3.0) + k;
 
-    //eps = Number.EPSILON;
+    let q = (2.0 / 27.0 * j * j * j) - (j * k / 3.0) + l;
+    let t = q * q / 4.0 + p * p * p / 27.0;
 
-    // Convert to depressed cubic t^3+pt+q = 0 (subst x = t - b/3a)
-    var p = (3*a*c - b*b)/(3*a*a);
-    var q = (2*b*b*b - 9*a*b*c + 27*a*a*d)/(27*a*a*a);
-    var roots;
-
-    if (Math.abs(p) < eps) { // p = 0 -> t^3 = -q -> t = -q^1/3
-        roots = [cuberoot(-q)];
-    } else if (Math.abs(q) < eps) { // q = 0 -> t^3 + pt = 0 -> t(t^2+p)=0
-        roots = [0].concat(p < 0 ? [Math.sqrt(-p), -Math.sqrt(-p)] : []);
-    } else {
-        var D = q*q/4 + p*p*p/27;
-        if (Math.abs(D) < eps) {       // D = 0 -> two roots
-            roots = [-1.5*q/p, 3*q/p];
-        } else if (D > 0) {             // Only one real root
-            var u = cuberoot(-q/2 - Math.sqrt(D));
-            roots = [u - p/(3*u)];
-        } else {                        // D < 0, three roots, but needs to use complex numbers/trigonometric solution
-            var u = 2*Math.sqrt(-p/3);
-            var t = Math.acos(3*q/p/u)/3;  // D < 0 implies p < 0 and acos argument in [-1..1]
-            var k = 2*Math.PI/3;
-            roots = [u*Math.cos(t), u*Math.cos(t-k), u*Math.cos(t-2*k)];
-        }
+    // force to zero if it is very close to zero
+    if (Math.abs(t) < eps) {
+        t = 0;
+    }
+    if (Math.abs(q) < eps) {
+        q = 0;
     }
 
-    // Convert back from depressed cubic
-    for (var i = 0; i < roots.length; i++)
-        roots[i] -= b/(3*a);
+    let r1 = 0, r2 = 0, r3 = 0, i1 = 0, i2 = 0, i3 = 0, i;
 
-    return roots;
-}   
+    // There are three cases according to the value of t
+    if (t > 0) {// one real, two complexs
+        r1 = cuberoot(-q / 2.0 + Math.sqrt(t)) + cuberoot(-q / 2.0 - Math.sqrt(t));
+        // two complex roots
+        r2 = -r1 / 2.0;
+        r3 = r2; // conjugated
+        // imaginary
+        if (q == 0) {
+            i = Math.sqrt(k);
+        } else {
+            i = Math.sqrt(Math.abs(Math.pow(r1 / 2.0, 2.0) + q / r1));
+        }
+        i1 = 0;
+        i2 = i;
+        i3 = -i;
+    } else if (t == 0) {
+        r1 = 2.0 * cuberoot(-q / 2.0);
+        r2 = -r1 / 2.0 + Math.sqrt(Math.pow(r1 / 2.0, 2.0) + q / r1);
+        r3 = -r1 / 2.0 - Math.sqrt(Math.pow(r1 / 2.0, 2.0) + q / r1);
+    } else if (t < 0) {
+        let x = -q / 2.0;
+        let y = Math.sqrt(-t); // make t positive
+        let angle = Math.atan(y / x);
+        if (q > 0) {// if q > 0 the angle becomes 2 * PI - angle
+            angle = Math.PI - angle;
+        }
+        r1 = 2.0 * Math.sqrt(-p / 3.0) * Math.cos(angle / 3.0);
+        r2 = 2.0 * Math.sqrt(-p / 3.0) * Math.cos((angle + 2.0 * Math.PI) / 3.0);
+        r3 = 2.0 * Math.sqrt(-p / 3.0) * Math.cos((angle + 4.0 * Math.PI) / 3.0);
+    }
+    result[0].r = r1 - j / 3.0;
+    result[0].i = i1;
+    result[1].r = r2 - j / 3.0;
+    result[1].i = i2;
+    result[2].r= r3 - j / 3.0;
+    result[2].i= i3;
+
+    return result;
+
+}
+
 
 var reg_math = {
     _poly_getvalue: function (x, reg) {
@@ -107,6 +123,9 @@ var reg_math = {
         for (let i=0; i < reg.equation.length; i++) {
             data += reg.equation[i] * Math.pow(x, i);
         }
+        if (data < 0 ) {
+            return 0;
+        }
         return round(data,2);
     },
     _linear_getvalue: function (x, reg) {
@@ -114,6 +133,9 @@ var reg_math = {
             return null;
         }
         var data = reg.equation[0] * x + reg.equation[1];
+        if (data < 0 ) {
+            return 0;
+        }
         return round(data,2);
     },
     _log_getvalue: function (x, reg) {
@@ -121,6 +143,9 @@ var reg_math = {
             return null;
         }
         var data = reg.equation[0] + reg.equation[1] * Math.log(x);
+        if (data < 0 ) {
+            return 0;
+        }
         return round(data,2);
     },
     _poly_setdata: function (data, order){
@@ -158,11 +183,11 @@ var reg_math = {
     _getroots: function (coeff, max) {
         [a,b,c,d] = coeff;
         d = d - max;
-        let root = solveCubic(a,b,c,d);
+        let root = solveCubic2(a,b,c,d);
         console.log(coeff);
         console.log(root);
         if (root.length > 0) {
-            return round(root[0]);
+            return (root[2].i >= 0)?round(root[2].r):0;
         }
         return 0;
     }
@@ -429,9 +454,9 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
         name: "",
         notfication: {
             summary: {
-                totalbitsPerSecond_1300:  { str: "Overall edge capacity for 1300 byte packets is %CAP%. Downstream throughput will approx. reach it in ", max_capacity: 0, current_value: 0, future_edges: [] },
-                totalbitsPerSecond_imix:  { str: "Overall edge capacity for IMIX packets is %CAP%. Downstream throughput will approx. reach it in ", max_capacity: 0, current_value: 0, future_edges: [] },
-                totalbitsPerSecond_64:    { str: "Overall edge capacity for 64 byte packets is %CAP%. Downstream throughput will approx. reach it in ", max_capacity: 0, current_value: 0, future_edges: [] },
+                totalbitsPerSecond_1300:  { str: "Overall edge capacity for 1300 byte packets is %CAP%.  Overall throughput will approx. reach it ", max_capacity: 0, current_value: 0, future_edges: [], type:"bps"},
+                totalbitsPerSecond_imix:  { str: "Overall edge capacity for IMIX packets is %CAP%. Overall throughput will approx. reach it ", max_capacity: 0, current_value: 0, future_edges: [], type: "bps"},
+                totalbitsPerSecond_64:    { str: "Overall edge capacity for 64 byte packets is %CAP%. Overall throughput will approx. reach it ", max_capacity: 0, current_value: 0, future_edges: [] , type: "bps"},
             }
         },
         table: {
@@ -454,18 +479,9 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
         this.draw.edge   = config["edge/getEdge"].getmodel() || "";
         this.draw.name   = config["edge/getEdge"].getname() || "";
 
-        var reg = false;
-        var reg_type;
-        var reg_time;
-        if (setup) {
-            var reg_type = setup.find("#reg_type").val();
-            if (reg_type != "none"){
-                var reg_time = setup.find("#reg_time").val();
-                if (reg_time != "none") {
-                    reg = true;
-                }
-            }
-        }
+        var reg_type = setup.find("#reg_type").val();
+        var reg_time = setup.find("#reg_time").val();
+
         // Creating a total system statistics and append it to existing result
         let total_systems = {
             link: {
@@ -542,7 +558,6 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
         resp.result.push(total_systems);
 
         for (const [_, type] of Object.entries(resp.result)) {
-           
             for (let j = 0; j < type.series.length; j++) {
                 let dir = type.series[j];
                 if (j == 0) {
@@ -566,25 +581,23 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                 var median    = this._quantile(cp_data, .50); 
                 var q25       = this._quantile(cp_data, .25);
                 const IQR     = q75 - q25;
+
                 var timestamp = dir.startTime;
-                if (reg) {
-                    var reg_data = [];
-                    for (let i = 0; i < dir.data.length; i++){
-                          var val = dir.data[i];
-                          if(val > (q75 + (1.5 * IQR)) || val < (q25 - (1.5 * IQR))) {
-                              continue;
-                          }
-                          reg_data.push([timestamp, val]);
-                          timestamp += dir.tickInterval;
-                    }
-                    reg_option[reg_type].setdata(reg_data);
+                var reg_data = [];
+                for (let i = 0; i < dir.data.length; i++){
+                      var val = dir.data[i];
+                      if(val > (q75 + (1.5 * IQR)) || val < (q25 - (1.5 * IQR))) {
+                          continue;
+                      }
+                      reg_data.push([timestamp, val]);
+                      timestamp += dir.tickInterval;
                 }
+                reg_option[reg_type].setdata(reg_data);
                 if (dir.metric === "totalbitsPerSecond") {
                     let a = ["_1300", "_imix", "_64"];
                     // Get maximum throughput for edge with 1300,imix and 64 bytes packets and calculate when this will be reached
                     for (let x = 0; x < a.length; x++) {
                         let metric = dir.metric.concat(a[x]); 
-                        console.log(metric);
                         let dict   = dictonary(metric);
                         let max    = dict.max(this.draw.edge);
                         this.draw.notfication.summary[metric].max_capacity   = max;
@@ -596,27 +609,21 @@ config ["metrics/getEdgeLinkSeries/Transport"] = {
                 timestamp = dir.startTime;
                 for (let i = 0; i < dir.data.length; i++){
                     var val = dir.data[i];
-                    var reg_value = null;
-                    if (reg){
-                       reg_value = reg_option[reg_type].getvalue(timestamp);
-                       items.push([ getDateTime(timestamp), type.link.displayName, dir.metric, val, mean, std, q95, q75, median, q25, reg_value, reg_option[reg_type].getr2()]); 
-                    }else{
-                       items.push([ getDateTime(timestamp), type.link.displayName, dir.metric, val, mean, std, q95, q75, median, q25, "",""]); 
-                    }
+                    var reg_value = reg_option[reg_type].getvalue(timestamp);
+                    items.push([ getDateTime(timestamp), type.link.displayName, dir.metric, val, mean, std, q95, q75, median, q25, reg_value, reg_option[reg_type].getr2()]); 
                     timestamp += dir.tickInterval;
                 }
 
                 this.draw.pointEnd = timestamp;
 
-                if (reg) {
-                      var result = new Date(timestamp);
-                      var future_date = result.setDate(result.getDate() + parseInt(reg_time));
-                      while (timestamp < future_date) {
-                            reg_value = reg_option[reg_type].getvalue(timestamp);
-                            items.push([getDateTime(timestamp), type.link.displayName, dir.metric,"","","","","","","",reg_value, reg_option[reg_type].getr2()]);
-                            timestamp += dir.tickInterval
-                      } 
-                }
+                var result = new Date(timestamp);
+                var future_date = result.setDate(result.getDate() + parseInt(reg_time));
+
+                while (timestamp < future_date) {
+                    reg_value = reg_option[reg_type].getvalue(timestamp);
+                    items.push([getDateTime(timestamp), type.link.displayName, dir.metric,"","","","","","","",reg_value, reg_option[reg_type].getr2()]);
+                    timestamp += dir.tickInterval
+                } 
             }
         }
         return items;
@@ -814,8 +821,8 @@ config ["metrics/getEdgeStatusSeries"] = {
         name: "",
         notfication: {
             summary: {
-                flowCount: { max_capacity: 0, current_value: 0, future_edges: [] },
-                tunnelCount: { max_capacity: 0, current_value: 0, future_edges: [] }
+                flowCount: { max_capacity: 0, current_value: 0, future_edges: [], type: "count"},
+                tunnelCount: { max_capacity: 0, current_value: 0, future_edges: [], type: "count"}
             }
         },
         table: {
@@ -831,64 +838,53 @@ config ["metrics/getEdgeStatusSeries"] = {
             items.push(this.csv_header);
         }
 
-        var reg = false;
-        var reg_type;
-        var reg_time;
-        if (setup) {
-            var reg_type = setup.find("#reg_type").val();
-            if (reg_type != "none"){
-                var reg_time = setup.find("#reg_time").val();
-                if (reg_time != "none") {
-                    reg = true;
-                }
-            }
-        }
+        var reg_type = setup.find("#reg_type").val();
+        var reg_time = setup.find("#reg_time").val();
 
-         if (reg) {
-            var systems = {};
-            for (const [_, arr] of Object.entries(resp.result.series)) {
-                var timestamp = new Date(arr.startTime).getTime(); 
-                for (const [metric, data] of Object.entries(arr)) {
-                    if ( metric != "startTime" && metric != "endTime"){
-                        if (!systems.hasOwnProperty(metric)) {
-                            systems[metric] = [];
-                        }
-                        systems[metric].push([timestamp, data]);
+        var systems = {};
+        for (const [_, arr] of Object.entries(resp.result.series)) {
+            var timestamp = new Date(arr.startTime).getTime(); 
+            for (const [metric, data] of Object.entries(arr)) {
+                if ( metric != "startTime" && metric != "endTime"){
+                    if (!systems.hasOwnProperty(metric)) {
+                        systems[metric] = [];
                     }
-                }
-            }
-            var systems_reg = {};
-            var systems_max = {};
-            
-            this.draw.edge   = config["edge/getEdge"].getmodel() || "";
-            this.draw.name   = config["edge/getEdge"].getname() || "";
-
-            for (metric in systems) {
-                systems_reg[metric] = Object.assign({},reg_option[reg_type]);
-                //systems_reg[metric] = JSON.parse(JSON.stringify(reg_option[reg_type]));
-                //systems_reg[metric] = clone(reg_option[reg_type]);
-                //systems_reg[metric] = clone(reg_option[reg_type]);
-                /* Need to do a better copy for "best" capacity calculation. I cannot find a better way hence disabling it.
-                systems_reg[metric] = {};
-                for (let k in reg_option[reg_type]){
-                    if (reg_option[reg_type].hasOwnProperty(k)) {
-                        systems_reg[metric][k] = reg_option[reg_type][k];
-                    } 
-                }
-                */
-                systems_reg[metric].setdata(systems[metric]);
-                if (!this.draw.edge) {
-                    continue;
-                }
-                if (this.draw.notfication.summary.hasOwnProperty(metric)) {
-                    let dict = dictonary(metric);
-                    let max = dict.max(this.draw.edge);
-                    this.draw.notfication.summary[metric].max_capacity   = max;
-                    this.draw.notfication.summary[metric].current_value  = systems_reg[metric].getroots(max);
-                    this.draw.notfication.summary[metric].future_edges   = dict.find(this.draw.edge);
+                    systems[metric].push([timestamp, data]);
                 }
             }
         }
+        var systems_reg = {};
+        var systems_max = {};
+        
+        this.draw.edge   = config["edge/getEdge"].getmodel() || "";
+        this.draw.name   = config["edge/getEdge"].getname() || "";
+
+        for (metric in systems) {
+            systems_reg[metric] = Object.assign({},reg_option[reg_type]);
+            //systems_reg[metric] = JSON.parse(JSON.stringify(reg_option[reg_type]));
+            //systems_reg[metric] = clone(reg_option[reg_type]);
+            //systems_reg[metric] = clone(reg_option[reg_type]);
+            /* Need to do a better copy for "best" capacity calculation. I cannot find a better way hence disabling it.
+            systems_reg[metric] = {};
+            for (let k in reg_option[reg_type]){
+                if (reg_option[reg_type].hasOwnProperty(k)) {
+                    systems_reg[metric][k] = reg_option[reg_type][k];
+                } 
+            }
+            */
+            systems_reg[metric].setdata(systems[metric]);
+            if (!this.draw.edge) {
+                continue;
+            }
+            if (this.draw.notfication.summary.hasOwnProperty(metric)) {
+                let dict = dictonary(metric);
+                let max = dict.max(this.draw.edge);
+                this.draw.notfication.summary[metric].max_capacity   = max;
+                this.draw.notfication.summary[metric].current_value  = systems_reg[metric].getroots(max);
+                this.draw.notfication.summary[metric].future_edges   = dict.find(this.draw.edge);
+            }
+        }
+
         for (let i = 0; i < resp.result.series.length; i++ ) {
             let arr = resp.result.series[i];
             let timestamp = new Date(arr.startTime).getTime(); 
@@ -901,27 +897,21 @@ config ["metrics/getEdgeStatusSeries"] = {
             for (const [metric, data] of Object.entries(arr)) {
                 if (metric != "startTime" && metric != "endTime"){
                     this.draw.table.Metric.dropdown[metric] = metric;
-                    if (reg) {
-                        items.push([getDateTime(timestamp), metric, data, systems_reg[metric].getvalue(timestamp), systems_reg[metric].getr2()]);    
-                    } else { 
-                        items.push([getDateTime(timestamp), metric, data, "", ""]);
-                    }
+                    items.push([getDateTime(timestamp), metric, data, systems_reg[metric].getvalue(timestamp), systems_reg[metric].getr2()]);    
                 }
             }
         }
 
         this.draw.pointEnd = timestamp;
 
-        if (reg) {
-              let result = new Date(timestamp);
-              let future_date = result.setDate(result.getDate() + parseInt(reg_time));
-              while (timestamp < future_date) {
-                    for (const [metric, _ ] of Object.entries(systems)) {
-                        items.push([getDateTime(timestamp), metric, "", systems_reg[metric].getvalue(timestamp), systems_reg[metric].getr2()]);    
-                    }
-                    timestamp += this.draw.pointInterval;
-              } 
-        }
+        let result = new Date(timestamp);
+        let future_date = result.setDate(result.getDate() + parseInt(reg_time));
+        while (timestamp < future_date) {
+            for (const [metric, _ ] of Object.entries(systems)) {
+                items.push([getDateTime(timestamp), metric, "", systems_reg[metric].getvalue(timestamp), systems_reg[metric].getr2()]);    
+            }
+            timestamp += this.draw.pointInterval;
+        } 
 
         return items;
     }
