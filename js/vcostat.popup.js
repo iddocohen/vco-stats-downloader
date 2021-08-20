@@ -57,7 +57,6 @@ $(document).on('click','a', function(event) {
                         "draw": JSON.stringify(config[api].draw),
                         "items": JSON.stringify(items)
                    });
-                   //chrome.tabs.sendMessage(tab.id, {"action": "draw", "title":config[api].name, "pointStart": pointStart, "pointInterval": pointInterval, "items": JSON.stringify(items)});
                 }
             });
         });
@@ -174,7 +173,6 @@ $(function () {
                     setup.html(`
                          Capacity trendline type:<br>
                          <select id="reg_type">
-                            <option value="none">[None]</option>
                             <option value="polynomial_3" selected="selected">Polynomial (3 degree)</option>
                             <option value="polynomial_2">Polynomial (2 degree)</option>
                             <option value="logarithmic">Logarithmic</option>
@@ -182,14 +180,19 @@ $(function () {
                          </select><br> 
                          Timeline:<br> 
                          <select id="reg_time">
-                            <option value="none">[None]</option>
-                            <option value="0" selected="selected">Now</option>
-                            <option value="1">+1 Day</option>
-                            <option value="7">+1 Week</option>
-                            <option value="14">+2 Weeks</option>
-                            <option value="31">+4 Weeks</option>
+                            <option value=0 selected="selected">Now</option>
+                            <option value=1>+1 Day</option>
+                            <option value=7>+1 Week</option>
+                            <option value=14>+2 Weeks</option>
+                            <option value=31>+4 Weeks</option>
                          </select>
-                    `); 
+                    `);
+                    if (config[api].resp.result.series !== undefined) {
+                        if (config[api].resp.result.series.length > 8000) {
+                            console.log("test");
+                            setup.find("#reg_time").val(14);
+                        }
+                    }
                     link.append(`<br><br><a href='#' class='capacityDraw'><img src='css/chart.png'/ title='Draw Chart'></a>`);
                 }
             } 
