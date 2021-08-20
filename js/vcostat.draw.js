@@ -4,6 +4,77 @@
 let yAxis = "";
 let draw = {};
 
+function round(number, precision) {
+    const multiplier = Math.pow(10, precision || 0);
+    return Math.round(number * multiplier) / multiplier;
+}
+
+function units (value, type="bit") {
+    const gunits = [
+        { unit: 1000 * 1000 * 1000, name: 'G'},
+        { unit: 1000 * 1000, name: 'M' },
+        { unit: 1000, name: 'K' },
+    ]
+    const tunits = [
+        { unit: 60, name: 'minute' },
+        { unit: 60 * 60, name: 'hour' },
+        { unit: 60 * 60 * 24, name: 'day' },
+        { unit: 60 * 60 * 24 * 7, name: 'week' },
+        { unit: 60 * 60 * 24 * 30, name: 'month' },
+        { unit: 60 * 60 * 24 * 365, name: 'year' }
+    ]
+
+    function convert (value, array, type) {
+        let valueInUnit = value,
+            unit = type;
+        for (let u of array) {
+            if (valueInUnit > u.unit) {
+               valueInUnit = value / u.unit;
+               unit = u.name+type;
+            }
+        }
+        return [valueInUnit, unit];
+    }    
+
+    let unit = "";
+
+    switch (type) {
+        case "Byte":
+        case "bit":
+            [value, unit] = convert(value, gunits, type);
+            if (value > 1) {
+                unit += "s";
+            }
+            value = round(value, 2);
+            break;
+        case "Bps":
+            [value, unit] = convert(value, gunits, 'B');
+            unit += "ps";
+            value = round(value, 2);
+            break;
+        case "bps":
+            [value, unit] = convert(value, gunits, 'b');
+            unit += "ps";
+            value = round(value, 2);
+            break;
+        case "time":
+            [value, unit] = convert(value, tunits, '');
+            if (unit == '') {
+                unit = "second";
+            }
+            if (value > 1) {
+                unit += 's';
+            }
+            break;
+        default: {
+            [value, unit] = convert(value, gunits, '');
+            value = round(value);
+            break;
+        }
+    } 
+    return value+" "+unit; 
+}
+
 //https://suckatcoding.com/blog/relative-time-in-js/
 function formatRelativeTime(date, reference, language = navigator.language) {
   if (!date) return ''
@@ -38,29 +109,31 @@ function formatRelativeTime(date, reference, language = navigator.language) {
   }).format(deltaInUnit.toFixed(0), unit)
 }
 
-function formatTitle (key="summary") {
+function formatTitle () {
     let html = draw.title + " - Capacity Trendline";
-    let year_3 = 365 * 3 * 86400 * 1000;
-    let year_5 = 365 * 5 * 86400 * 1000;
-    let year_10 = 365 * 10 * 86400 * 1000;
-
     if (draw.name !== "") {
         html += " of "+draw.name+" ";
         html += "("+draw.edge+")";
     }
+    return html;
+}
 
+function formatNotify (key="summary") {
     if (!draw.notfication.hasOwnProperty(key)) {
-        return html;
+        return false;
     }
 
+    let year_3 = 365 * 3 * 86400 * 1000;
+    let year_5 = 365 * 5 * 86400 * 1000;
+    let year_10 = 365 * 10 * 86400 * 1000;
     let object = draw.notfication[key]; 
-    
-    //let upgarde_edge = {};
 
+    /*
     $(".alert").each(function(key, value) {
         $(this).html("");
         $(this).hide();
     });
+    */
 
     for (const [metric, obj] of Object.entries(object)) { 
         if (obj.current_value <= 0 || obj.max_capacity <= 0) {
@@ -76,11 +149,12 @@ function formatTitle (key="summary") {
             continue;
         }
         // "Maxium capacity of <metric> is <number>. This will be reached <date>."
+        obj.max_capacity = units(obj.max_capacity, obj.type);
         if (obj.str === undefined) {
             divhtml += "Maximum capacity of "+metric+" is "+obj.max_capacity;
             divhtml += " for this edge type. This will be reached appox. ";
         } else {
-            divhtml += obj.str; 
+            divhtml += obj.str.replace("%CAP%",obj.max_capacity); 
         }
         if (diff >= year_5 && diff < year_10) {
             whichdiv = ".alert.alert-info";
@@ -118,8 +192,6 @@ function formatTitle (key="summary") {
         }
         */
     }
-
-    return html;
 }
 
 
@@ -206,7 +278,7 @@ function getTableData(table) {
     
     timeArr.push(data[0]);
     // TODO: Hack and need to be done via config not via title
-    if (draw.title == "Systems") {
+    if (draw.title.includes("Systems")) {
         dataArr.push(parseFloat(data[2]));
     } else {
         dataArr.push(parseFloat(data[3]));
@@ -285,11 +357,19 @@ function createHighcharts2(data) {
         labels: {
             formatter: function () {
                 /* TODO: Hack again...*/
-                if (draw.title !== "Systems") {
-                    return bytes(this.value, true);
-                } else {
-                    return this.value;
+                if (yAxis.includes("Bits Per Second")) {
+                    return units(this.value, "bps");
                 }
+                if (yAxis.includes("Count")) {
+                    return units(this.value, "count");
+                }
+                if (yAxis.includes("Bytes")) {
+                    return units(this.value, "byte");
+                }
+                if (yAxis.includes("Pct")) {
+                    return units(this.value, "") + " %";
+                }
+                return units(this.value, "");
             }
         }
     },
@@ -297,17 +377,24 @@ function createHighcharts2(data) {
     subtitle: {
         text: 'Built chart in ...', // dummy text to reserve space for dynamic subtitle
     },
-    /*
     tooltip: {
         formatter: function() {
-            if (draw.title !== "Systems") {
-                return bytes(this.y, true);
-            } else {
-                return this.y;
-            }
+                /* TODO: Hack again...*/
+                if (yAxis.includes("Bits Per Second")) {
+                    return units(this.y, "bps");
+                }
+                if (yAxis.includes("Count")) {
+                    return units(this.y, "count");
+                }
+                if (yAxis.includes("Bytes")) {
+                    return units(this.y, "byte");
+                }
+                if (yAxis.includes("Pct")) {
+                    return units(this.y, "") + " %";
+                }
+                return units(this.y, "");
         }
     },
-    */
     series: [
     { 
         name: yAxis + ' over Time',
@@ -315,15 +402,7 @@ function createHighcharts2(data) {
         pointStart: draw.pointStart,
         pointInterval: draw.pointInterval,
         tooltip: {
-            formatter: function() {
-                /* TODO: Hack again...*/
-                if (draw.title !== "Systems") {
-                    return bytes(this.y, true);
-                } else {
-                    return this.y;
-                }
-            },
-            valueDecimals:0
+            valueDecimals: 0,
         }
     },
     {
@@ -532,20 +611,16 @@ $(function () {
         if (request.action != "draw"){
            return true;
         }
-        //const draw = JSON.parse(request.draw);
-        //title = draw.title;        
-        //pointStart = draw.pointStart;
-        //pointInterval = draw.pointInterval;
         draw = JSON.parse(request.draw)
         const items = JSON.parse(request.items);
 
         console.log(draw);
 
+        formatNotify();
+
         html = headerToHtml(items);
         items.shift();
         $(".container").append(html);      
-        //html = itemsToHtml(items);
-        //$(".container").append(html);    
         $('#dt-table thead tr').clone(true).appendTo( '#dt-table thead' );
         $('#dt-table thead tr:eq(1) th').each(function (i) {
             let header = $(this).text();
@@ -576,7 +651,7 @@ $(function () {
                     if (table.column(i).search() !== this.value ) {
                         table
                             .column(i)
-                            .search( this.value )
+                            .search( "^"+this.value+"$", true, false )
                             .draw();
                     }
                 });
